@@ -1,0 +1,21 @@
+Name:			hsp
+Version:		0.3.1
+License:		PublicDomain
+Author:			Niklas Broberg, Joel Björnson
+Maintainer:		nibro@cs.chalmers.se
+Exposed-Modules:	HSP.XML, HSP.XML.PCDATA, HSP.Env.Request
+			HSP.XMLGenerator, HSP.Monad
+Build-Depends:		base, mtl, harp
+GHC-Options:		-F -pgmFtrhsx
+Extensions:		MultiParamTypeClasses,
+			FunctionalDependencies,
+			RankNTypes,
+			PolymorphicComponents,
+			ExistentialQuantification,
+			FlexibleContexts,
+			FlexibleInstances,
+			EmptyDataDecls,
+			CPP,
+			TypeSynonymInstances,
+			OverlappingInstances,
+			UndecidableInstances
