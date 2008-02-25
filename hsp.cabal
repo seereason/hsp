@@ -1,21 +1,43 @@
-Name:			hsp
-Version:		0.3.1
-License:		PublicDomain
-Author:			Niklas Broberg, Joel Björnson
-Maintainer:		nibro@cs.chalmers.se
-Exposed-Modules:	HSP.XML, HSP.XML.PCDATA, HSP.Env.Request
-			HSP.XMLGenerator, HSP.Monad
-Build-Depends:		base, mtl, harp
-GHC-Options:		-F -pgmFtrhsx
-Extensions:		MultiParamTypeClasses,
-			FunctionalDependencies,
-			RankNTypes,
-			PolymorphicComponents,
-			ExistentialQuantification,
-			FlexibleContexts,
-			FlexibleInstances,
-			EmptyDataDecls,
-			CPP,
-			TypeSynonymInstances,
-			OverlappingInstances,
-			UndecidableInstances
+Name:                   hsp
+Version:                0.3.1
+License:                BSD3
+License-File:           LICENSE
+Author:                 Niklas Broberg, Joel Björnson
+Maintainer:             Niklas Broberg <nibro@cs.chalmers.se>
+
+Stability:              Experimental
+Category:               Language
+Synopsis:               Haskell Server Pages is a library for writing dynamic server-side web pages.
+Description:            Haskell Server Pages (HSP) is an extension of vanilla Haskell, targetted at the task of
+                        writing dynamic server-side web pages. Features include:
+                        .
+                        * Embedded XML syntax
+                        .
+                        * A (low-to-mid-level) programming model for writing dynamic web pages
+                        .
+                        * A cgi-handler utility 
+                        .
+                        For details on usage, please see the website, and the author's thesis.
+Homepage:               http://code.google.com/hsp
+
+Build-Depends:          base>3, mtl, harp
+Build-Type:             Simple
+Tested-With:            GHC==6.8.3
+
+Exposed-Modules:        HSP.XML, HSP.XML.PCDATA, HSP.Env.Request
+                        HSP.XMLGenerator, HSP.Monad
+
+GHC-Options:            -F -pgmFtrhsx -Wall
+Extensions:             MultiParamTypeClasses,
+                        FunctionalDependencies,
+                        RankNTypes,
+                        PolymorphicComponents,
+                        ExistentialQuantification,
+                        FlexibleContexts,
+                        FlexibleInstances,
+                        EmptyDataDecls,
+                        CPP,
+                        TypeSynonymInstances,
+                        OverlappingInstances,
+                        UndecidableInstances,
+                        PatternGuards
