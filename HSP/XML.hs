@@ -87,7 +87,7 @@ renderXML xml = renderXML' 0 xml ""
 data TagType = Open | Close | Single
 
 renderXML' :: Int -> XML -> ShowS
-renderXML' _ (CDATA cdata) = showString cdata
+renderXML' _ (CDATA cd) = showString cd
 renderXML' n (Element name attrs []) = renderTag Single n name attrs
 renderXML' n (Element name attrs children) =
 	let open  = renderTag Open n name attrs 
@@ -96,7 +96,7 @@ renderXML' n (Element name attrs children) =
 	 in open . cs . close
 
   where renderChildren :: Int -> Children -> ShowS
-	renderChildren n cs = foldl (.) id $ map (renderXML' (n+2)) cs
+	renderChildren n' cs = foldl (.) id $ map (renderXML' (n'+2)) cs
 
 		
 renderTag :: TagType -> Int -> Name -> Attributes -> ShowS 
@@ -111,12 +111,12 @@ renderTag typ n name attrs =
 
   where renderAttrs :: Attributes -> ShowS
 	renderAttrs [] = nl
-	renderAttrs attrs = showChar ' ' . ats . nl
-	  where ats = foldl (.) id $ intersperse (showChar ' ') $ fmap renderAttr attrs
+	renderAttrs attrs' = showChar ' ' . ats . nl
+	  where ats = foldl (.) id $ intersperse (showChar ' ') $ fmap renderAttr attrs'
 
 
 	renderAttr :: Attribute -> ShowS
-	renderAttr (n, (Value val)) = showName n . showChar '=' . renderAttrVal val
+	renderAttr (nam, (Value val)) = showName nam . showChar '=' . renderAttrVal val
 
 	renderAttrVal :: String -> ShowS
 	renderAttrVal s = showChar '\"' . showString s . showChar '\"'

@@ -20,7 +20,7 @@ module HSP.Env.Request (
 	readParameter_
 	) where
 
-import HSP.Exception
+import HSP.Exception (throwHSP, Exception(..))
 
 -- | A record representing an interface to an HTTP request. This allows us to use
 -- many different underlying types for these requests, all we need is to supply
@@ -34,8 +34,8 @@ data Request = Request {
 -- | Get a parameter from the request query string (GET) or body (POST).
 -- | Returns @Nothing@ if the parameter is not set.
 getParameter :: Request -> String -> Maybe String
-getParameter r s = case getParameterL r s of
-		    (s:_) -> Just s
+getParameter r k = case getParameterL r k of
+		    (v:_) -> Just v
 		    _     -> Nothing
 
 -- | Unsafe version of getParameter, essentially fromJust.(getParameter r) but throws
