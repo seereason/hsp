@@ -12,7 +12,12 @@
 -----------------------------------------------------------------------------
 
 module HSP.Env.Request (
-	Request(..)
+	Request(..),
+	getParameter,
+	getParameter_,
+	readParameter,
+	readParameterL,
+	readParameter_
 	) where
 
 import HSP.Exception
