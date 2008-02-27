@@ -46,7 +46,7 @@ unescape = reverse . unE ""
   	  case c of
   	    '&' -> let (esc, ';':rest) = break (==';') cs
   	               Just ec = revLookup esc escapeChars
-  	            in unE (ec:acc) cs
+  	            in unE (ec:acc) rest
   	    _ -> unE (c:acc) cs
   	
   	revLookup e = lookup e . map (\(a,b) -> (b,a))
