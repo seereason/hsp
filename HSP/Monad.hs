@@ -40,8 +40,6 @@ import Prelude hiding (catch)
 import Control.Exception (catchDyn)
 import HSP.Exception
 
-import HSP.Utils.TypeCast
-
 import HSP.Env.Request
 
 --------------------------------------------------------------
