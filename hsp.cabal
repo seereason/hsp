@@ -20,7 +20,7 @@ Description:            Haskell Server Pages (HSP) is an extension of vanilla Ha
                         For details on usage, please see the website, and the author's thesis.
 Homepage:               http://code.google.com/hsp
 
-Build-Depends:          base>3, mtl, harp
+Build-Depends:          base>3, mtl, harp, hsx
 Build-Type:             Simple
 Tested-With:            GHC==6.8.3
 
