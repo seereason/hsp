@@ -26,7 +26,9 @@ module HSP.Monad (
 	IsXMLs(..), 
 	IsAttrValue(..),
 	-- * Functions
-	getEnv, set, setAll, catch
+	getEnv, set, setAll, catch, extract,
+	-- * Modules
+	module HSX.XMLGenerator
 	) where
 
 -- Monad imports
@@ -290,6 +292,49 @@ setAll isxml ats = do
 	case xml of
 	 CDATA _     -> return xml
 	 Element n as cs -> return $ Element n (foldr insert as attrs) cs
+
+
+---------------
+-- GetAttrValue
+
+-- | Instantiate this class to enable values of the given type
+-- to be retrieved through attribute patterns.
+class GetAttrValue a where
+ fromAttrValue :: AttrValue -> a
+
+-- | An AttrValue is trivial.
+instance GetAttrValue AttrValue where
+ fromAttrValue = id
+
+-- | Strings can be directly taken from values.
+instance GetAttrValue String where
+ fromAttrValue (Value s) = s
+ 
+-- | Anything that can be read can always fall back on
+-- that as a default behavior.
+instance (Read a) => GetAttrValue a where
+ fromAttrValue = read . fromAttrValue
+
+-- | An IO computation returning something that can be represented
+-- as an attribute value can be lifted into an analogous HSP computation.
+--instance (GetAttrValue a, Monad m) => GetAttrValue (m a) where
+-- fromAttrValue = return . fromAttrValue
+
+-- | The common way to present list data in attributes is as
+-- a comma separated, unbracketed sequence
+instance (GetAttrValue a) => GetAttrValue [a] where
+ fromAttrValue v@(Value str) = case str of
+ 	[/ v1+, (/ ',', vs@:_+ /)+ /] -> 
+ 		map (fromAttrValue . Value) (v1:vs)
+ 	_ -> [fromAttrValue v]
+
+-- All that for these two functions
+extract :: (GetAttrValue a) => Name -> Attributes -> (Maybe a, Attributes)
+extract _ [] = (Nothing, [])
+extract name (p@(n, v):as) 
+	| name == n = (Just $ fromAttrValue v, as)
+	| otherwise = let (val, attrs) = extract name as
+		       in (val, p:attrs)
 
 
 --------------------------------------------------------------------
