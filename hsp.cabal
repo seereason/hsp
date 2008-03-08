@@ -25,6 +25,7 @@ Build-Type:             Simple
 Tested-With:            GHC==6.8.3
 
 Exposed-Modules:        HSP.XML, HSP.XML.PCDATA, HSP.Env.Request, HSP.Monad
+Other-Modules:		HSP.Exception
 
 GHC-Options:            -F -pgmFtrhsx -Wall
 Extensions:             MultiParamTypeClasses,
