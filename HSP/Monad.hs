@@ -231,10 +231,6 @@ instance (IsAttrValue a) => IsAttrValue (HSP a) where
 -----------------------------------------------------------------------
 -- Manipulating attributes
 
--- | A datatype that allows us to the fancy := operator when assigning
--- values to attributes.
-data Attr = forall n a . (IsName n, IsAttrValue a) => n := a
-
 -- | Names can be simple or qualified with a domain. We want to conveniently
 -- use both simple strings or pairs wherever a Name is expected.
 class IsName n where
