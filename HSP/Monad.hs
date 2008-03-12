@@ -25,8 +25,10 @@ module HSP.Monad (
 	IsXML(..), 
 	IsXMLs(..), 
 	IsAttrValue(..),
+	IsAttribute(..),
 	-- * Functions
 	getEnv, set, setAll, catch, extract,
+	element, eElement,
 	-- * Modules
 	module HSX.XMLGenerator
 	) where
