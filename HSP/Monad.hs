@@ -88,11 +88,9 @@ instance GenerateXML HSP' XML (HSP Attribute) (HSP [XML]) where
  genElement = element
  genEElement = eElement
 
--- | Any child elements that arise through the use of literal syntax should be of the same
--- type as the parent element, unless explicitly given a different type. We use TypeCast
--- to accomplish this.
-instance TypeCast (m x) (HSP' XML) => EmbedAsChild (XMLGenerator m x) (HSP [XML]) where
- asChild (XMLGenerator x) = XMLGenerator $ fmap return $ typeCast x
+instance (IsXMLs a) => EmbedAsChild a (HSP [XML]) where
+ asChild = toXMLs
+
 
 -------------------------------------------------------------------
 -- Type classes
@@ -144,9 +142,14 @@ class IsXMLs a where
 -- | Anything that can be represented as a single XML element
 -- can of course be represented as a (singleton) list of XML
 -- elements.
-instance (IsXML a) => IsXMLs a where
- toXMLs a = do xml <- toXML a
- 	       return [xml]
+--instance (IsXML a) => IsXMLs a where
+-- toXMLs a = do xml <- toXML a
+-- 	       return [xml]
+
+-- | XML can naturally be represented as XML.
+instance IsXMLs XML where
+ toXMLs = return . return
+
 
 -- | We must specify an extra rule for Strings even though the previous
 -- rule would apply, because the rule for [a] would also apply and
@@ -164,13 +167,13 @@ instance (IsXMLs a) => IsXMLs [a] where
 -- | An IO computation returning something that can be represented
 -- as a list of XML can be lifted into an analogous HSP computation.
 instance (IsXMLs a) => IsXMLs (IO a) where
- toXMLs = toXMLs . doIO
+ toXMLs ioa = doIO ioa >>= toXMLs
 
--- | An HSP computation returning something that can be represented
--- as a list of XML simply needs to turn the produced value into 
--- a list of XML.
-instance (IsXMLs a) => IsXMLs (HSP a) where
- toXMLs hspa = hspa >>= toXMLs
+-- | Any child elements that arise through the use of literal syntax should be of the same
+-- type as the parent element, unless explicitly given a different type. We use TypeCast
+-- to accomplish this. This also captures the case when the embedded value is an HSP computation.
+instance (IsXMLs x, TypeCast (m x) (HSP' x)) => IsXMLs (XMLGenerator m x) where
+ toXMLs (XMLGenerator x) = (XMLGenerator $ typeCast x) >>= toXMLs
 
 -- | Of the base types, () stands out as a type that can only be
 -- represented as a (empty) list of XML.
@@ -182,11 +185,6 @@ instance IsXMLs () where
 instance (IsXMLs a) => IsXMLs (Maybe a) where
  toXMLs Nothing = return []
  toXMLs (Just a) = toXMLs a
-
--- | Anything that can be represented as a list of XML elements can
--- also be used as children of an XML element.
-instance (IsXMLs a) => EmbedAsChild a (HSP [XML]) where
- asChild = toXMLs
 
 ---------------
 -- IsAttrValue
@@ -259,7 +257,7 @@ instance IsAttribute Attribute where
  toAttribute = return
 
 -- | Values of the Attr type, constructed with :=, can represent attributes.
-instance IsAttribute Attr where
+instance (IsName n, IsAttrValue a) => IsAttribute (Attr n a) where
  toAttribute (n := a) = do av <- toAttrValue a
  			   return (toName n, av)
 
