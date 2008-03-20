@@ -30,6 +30,7 @@ Other-Modules:		HSP.Exception
 GHC-Options:            -F -pgmFtrhsx -Wall
 Extensions:             MultiParamTypeClasses,
                         FunctionalDependencies,
+                        TypeFamilies,
                         RankNTypes,
                         PolymorphicComponents,
                         ExistentialQuantification,

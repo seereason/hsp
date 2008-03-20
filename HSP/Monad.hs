@@ -36,7 +36,8 @@ module HSP.Monad (
 -- Monad imports
 import Control.Monad.Reader (ReaderT(..), ask, lift)
 import Control.Monad.Trans (MonadIO(..))
-import HSX.XMLGenerator
+import HSX.XMLGenerator hiding (XMLGenerator(..))
+import qualified HSX.XMLGenerator as HSX (XMLGenerator(..))
 import HSP.XML -- the XML type generated with this XMLGenerator monad
 import Prelude hiding (catch)
 
@@ -52,7 +53,7 @@ import HSP.Env.Request
 -- | The HSP monad is a reader wrapper around
 -- the IO monad, but extended with an XMLGenerator wrapper.
 type HSP' = ReaderT HSPEnv IO
-type HSP  = XMLGenerator HSP'
+type HSP  = XMLGenT HSP'
 
 -- | The runtime environment for HSP pages.
 data HSPEnv = HSPEnv {
@@ -67,7 +68,7 @@ dummyEnv = undefined
 -- | Runs a HSP computation in a particular environment. Since HSP wraps the IO monad,
 -- the result of running it will be an IO computation.
 runHSP :: HSP a -> HSPEnv -> IO a
-runHSP = runReaderT . unXMLGenerator
+runHSP = runReaderT . unXMLGenT
 
 -- | Runs a HSP computation without an environment. Will work if the page in question does
 -- not touch the environment. Not sure about the usefulness at this stage though...
@@ -86,11 +87,14 @@ getEnv = lift ask
 -- Instantiating GenXML for the HSP monad.
 
 -- | We can use literal XML syntax to generate values of type XML in the HSP monad.
-instance GenerateXML HSP' XML (HSP Attribute) (HSP [XML]) where
+instance HSX.XMLGenerator HSP' where
+ type HSX.XML HSP' = XML
+ type HSX.Attribute HSP' = HSP Attribute 
+ type HSX.Child HSP' = HSP [XML]
  genElement = element
  genEElement = eElement
 
-instance (IsXMLs a) => EmbedAsChild a (HSP [XML]) where
+instance (IsXMLs a) => EmbedAsChild a HSP' where
  asChild = toXMLs
 
 
@@ -174,8 +178,8 @@ instance (IsXMLs a) => IsXMLs (IO a) where
 -- | Any child elements that arise through the use of literal syntax should be of the same
 -- type as the parent element, unless explicitly given a different type. We use TypeCast
 -- to accomplish this. This also captures the case when the embedded value is an HSP computation.
-instance (IsXMLs x, TypeCast (m x) (HSP' x)) => IsXMLs (XMLGenerator m x) where
- toXMLs (XMLGenerator x) = (XMLGenerator $ typeCast x) >>= toXMLs
+instance (IsXMLs x, TypeCast (m x) (HSP' x)) => IsXMLs (XMLGenT m x) where
+ toXMLs (XMLGenT x) = (XMLGenT $ typeCast x) >>= toXMLs
 
 -- | Of the base types, () stands out as a type that can only be
 -- represented as a (empty) list of XML.
@@ -273,7 +277,7 @@ instance (IsAttribute a) => IsAttribute (IO a) where
 
 -- | Anything that can represent an attribute can also be embedded as attributes
 -- using the literal XML syntax.
-instance (IsAttribute a) => EmbedAsAttr a (HSP Attribute) where
+instance (IsAttribute a) => EmbedAsAttr a HSP' where
  asAttr = toAttribute
 
 -- | Set an attribute to something in an XML element.
@@ -375,6 +379,6 @@ eElement n attrs = element n attrs ([] :: [XML])
 
 -- | Catch a user-caused exception.
 catch :: HSP a -> (Exception -> HSP a) -> HSP a
-catch (XMLGenerator (ReaderT f)) handler = XMLGenerator $ ReaderT $ \e ->
-	f e `catchDyn` (\ex -> (let (XMLGenerator (ReaderT g)) = handler ex
+catch (XMLGenT (ReaderT f)) handler = XMLGenT $ ReaderT $ \e ->
+	f e `catchDyn` (\ex -> (let (XMLGenT (ReaderT g)) = handler ex
 				 in g e))
