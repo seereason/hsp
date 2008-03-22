@@ -94,7 +94,7 @@ instance HSX.XMLGenerator HSP' where
  genElement = element
  genEElement = eElement
 
-instance (IsXMLs a) => EmbedAsChild a HSP' where
+instance (IsXMLs a) => EmbedAsChild a (HSP [XML]) where
  asChild = toXMLs
 
 
@@ -277,7 +277,7 @@ instance (IsAttribute a) => IsAttribute (IO a) where
 
 -- | Anything that can represent an attribute can also be embedded as attributes
 -- using the literal XML syntax.
-instance (IsAttribute a) => EmbedAsAttr a HSP' where
+instance (IsAttribute a) => EmbedAsAttr a (HSP Attribute) where
  asAttr = toAttribute
 
 -- | Set an attribute to something in an XML element.
