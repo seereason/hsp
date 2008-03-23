@@ -27,7 +27,8 @@ module HSP.Monad (
 	IsAttrValue(..),
 	IsAttribute(..),
 	-- * Functions
-	getEnv, set, setAll, catch, extract,
+	getEnv, getRequest, getIncNumber,
+        set, setAll, catch, extract,
 	element, eElement,
 	-- * Modules
 	module HSX.XMLGenerator
@@ -46,6 +47,7 @@ import Control.Exception (catchDyn)
 import HSP.Exception
 
 import HSP.Env.Request
+import HSP.Env.NumberGen
 
 --------------------------------------------------------------
 -- The HSP Monad
@@ -59,6 +61,7 @@ type HSP  = XMLGenT HSP'
 data HSPEnv = HSPEnv {
 	  getReq  :: Request -- In CGI mode we only support Request
 --	, getResp :: Rp.Response
+	, getNG   :: NumberGen
 	}
 
 -- do NOT export this in the final version
@@ -82,6 +85,12 @@ doIO = liftIO
 -- | Supplíes the HSP environment.
 getEnv :: HSP HSPEnv
 getEnv = lift ask
+
+getRequest :: HSP Request
+getRequest = fmap getReq getEnv
+
+getIncNumber :: HSP Int
+getIncNumber = getEnv >>= doIO . incNumber . getNG
 
 ---------------------------------------------
 -- Instantiating GenXML for the HSP monad.

@@ -1,5 +1,5 @@
 Name:                   hsp
-Version:                0.3.3
+Version:                0.3.4
 License:                BSD3
 License-File:           LICENSE
 Author:                 Niklas Broberg, Joel Björnson
@@ -24,7 +24,7 @@ Build-Depends:          base>3, mtl, harp, hsx
 Build-Type:             Simple
 Tested-With:            GHC==6.8.3
 
-Exposed-Modules:        HSP.XML, HSP.XML.PCDATA, HSP.Env.Request, HSP.Monad
+Exposed-Modules:        HSP.XML, HSP.XML.PCDATA, HSP.Env.Request, HSP.Env.NumberGen, HSP.Monad
 Other-Modules:		HSP.Exception
 
 GHC-Options:            -F -pgmFtrhsx -Wall
