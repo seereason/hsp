@@ -24,8 +24,8 @@ Build-Depends:          base>3, mtl, harp, hsx
 Build-Type:             Simple
 Tested-With:            GHC==6.8.3
 
-Exposed-Modules:        HSP.XML, HSP.XML.PCDATA, HSP.Env.Request, HSP.Env.NumberGen, HSP.Monad
-Other-Modules:		HSP.Exception
+Exposed-Modules:        HSP.XML, HSP.XML.PCDATA, HSP.Env, HSP.Env.Request, HSP.Env.NumberGen, HSP
+Other-Modules:		HSP.Exception, HSP.Monad, HSP.XMLGenerator
 
 GHC-Options:            -F -pgmFtrhsx -Wall
 Extensions:             MultiParamTypeClasses,
