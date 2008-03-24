@@ -37,7 +37,7 @@ module HSP.Monad (
 -- Monad imports
 import Control.Monad.Reader (ReaderT(..), ask, lift)
 import Control.Monad.Trans (MonadIO(..))
-import HSX.XMLGenerator hiding (XMLGenerator(..))
+import HSX.XMLGenerator hiding (XMLGenerator(..), Name)
 import qualified HSX.XMLGenerator as HSX (XMLGenerator(..))
 import HSP.XML -- the XML type generated with this XMLGenerator monad
 import Prelude hiding (catch)
@@ -243,24 +243,6 @@ instance (IsAttrValue a) => IsAttrValue (HSP a) where
 
 -----------------------------------------------------------------------
 -- Manipulating attributes
-
--- | Names can be simple or qualified with a domain. We want to conveniently
--- use both simple strings or pairs wherever a Name is expected.
-class IsName n where
- toName :: n -> Name
-
--- | Names can represent names, of course.
-instance IsName Name where
- toName = id
-
--- | Strings can represent names, meaning a simple name with no domain.
-instance IsName String where
- toName s = (Nothing, s)
-
--- | Pairs of strings can represent names, meaning a name qualified with a domain.
-instance IsName (String, String) where
- toName (ns, s) = (Just ns, s)
-
 
 -- | Just like with XML children, we want to conveniently allow values of various
 -- types to appear as attributes. 
