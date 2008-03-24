@@ -98,8 +98,8 @@ getIncNumber = getEnv >>= doIO . incNumber . getNG
 -- | We can use literal XML syntax to generate values of type XML in the HSP monad.
 instance HSX.XMLGenerator HSP' where
  type HSX.XML HSP' = XML
- type HSX.Attribute HSP' = HSP Attribute 
- type HSX.Child HSP' = HSP [XML]
+ type HSX.Attribute HSP' = Attribute 
+ type HSX.Child HSP' = XML
  genElement = element
  genEElement = eElement
 
