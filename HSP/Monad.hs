@@ -27,7 +27,7 @@ module HSP.Monad (
 	IsAttrValue(..),
 	IsAttribute(..),
 	-- * Functions
-	getEnv, getRequest, getIncNumber,
+	getEnv, getRequest, getIncNumber, doIO,
 --        set, setAll, 
         catch, extract,
 	element, eElement,
