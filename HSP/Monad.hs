@@ -28,7 +28,8 @@ module HSP.Monad (
 	IsAttribute(..),
 	-- * Functions
 	getEnv, getRequest, getIncNumber,
-        set, setAll, catch, extract,
+--        set, setAll, 
+        catch, extract,
 	element, eElement,
 	-- * Modules
 	module HSX.XMLGenerator
@@ -272,19 +273,37 @@ instance (IsAttribute a) => EmbedAsAttr a (HSP Attribute) where
  asAttr = toAttribute
 
 -- | Set an attribute to something in an XML element.
-set :: (IsXML a, IsAttribute at) => a -> at -> HSP XML
-set x a = setAll x [a]
+--set :: (IsXML a, IsAttribute at) => a -> at -> HSP XML
+--set x a = setAll x [a]
 
--- | Set many attributes at once.
-setAll :: (IsXML a, IsAttribute at) => a -> [at] -> HSP XML
-setAll isxml ats = do
-	xml   <- toXML isxml
-	attrs <- mapM toAttribute ats
+-----------------------------------------
+-- SetAttr and AppendChild
+
+-- | Set attributes.
+instance SetAttr HSP' XML where
+ setAll xml hats = do
+        attrs <- fmap concat $ sequence hats
 	case xml of
-	 CDATA _     -> return xml
+	 CDATA _         -> return xml
 	 Element n as cs -> return $ Element n (foldr insert as attrs) cs
 
 
+instance TypeCast (m x) (HSP' XML)
+                => SetAttr HSP' (XMLGenT m x) where
+ setAll (XMLGenT hxml) ats = (XMLGenT $ typeCast hxml) >>= \xml -> setAll xml ats
+
+-- | Append children.
+instance AppendChild HSP' XML where
+ appAll xml children = do
+        css <- mapM toXMLs children
+        case xml of
+         CDATA _         -> return xml
+         Element n as cs -> return $ Element n as (cs ++ concat css)
+
+instance TypeCast (m x) (HSP' XML) 
+                => AppendChild HSP' (XMLGenT m x) where
+ appAll (XMLGenT hxml) chs = (XMLGenT $ typeCast hxml) >>= (flip appAll) chs
+ 
 ---------------
 -- GetAttrValue
 
