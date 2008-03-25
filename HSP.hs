@@ -11,7 +11,10 @@ module HSP (
         module HSP.XML.PCDATA,
         
         -- module HSP.XMLGenerator
-        module HSP.XMLGenerator
+        module HSP.XMLGenerator,
+        
+        -- module HSP.HJScript
+        module HSP.HJScript
 
     ) where
 
@@ -22,3 +25,4 @@ import HSP.Env hiding (mkSimpleEnv)
 import HSP.XML hiding (Name)
 import HSP.XML.PCDATA
 import HSP.XMLGenerator
+import HSP.HJScript
