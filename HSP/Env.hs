@@ -1,10 +1,10 @@
 module HSP.Env (
-	module HSP.Env.Request,
-	module HSP.Env.NumberGen,
-	
+        module HSP.Env.Request,
+        module HSP.Env.NumberGen,
+        
         HSPEnv(..),
         
-	mkSimpleEnv
+        mkSimpleEnv
     ) where
     
 import HSP.Env.Request
@@ -14,10 +14,10 @@ import Data.IORef
 
 -- | The runtime environment for HSP pages.
 data HSPEnv = HSPEnv {
-	  getReq  :: Request -- In CGI mode we only support Request
---	, getResp :: Rp.Response
-	, getNG   :: NumberGen
-	}
+          getReq  :: Request -- In CGI mode we only support Request
+--      , getResp :: Rp.Response
+        , getNG   :: NumberGen
+        }
 
 
 
