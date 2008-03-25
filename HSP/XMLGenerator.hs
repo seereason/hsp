@@ -86,7 +86,7 @@ class IsXMLs a where
 -- elements.
 --instance (IsXML a) => IsXMLs a where
 -- toXMLs a = do xml <- toXML a
--- 	       return [xml]
+--             return [xml]
 
 -- | XML can naturally be represented as XML.
 instance IsXMLs XML where
@@ -98,13 +98,13 @@ instance IsXMLs XML where
 -- would be more specific.
 instance IsXMLs String where
  toXMLs s = do xml <- toXML s
- 	       return [xml]
+               return [xml]
 
 -- | If something can be represented as a list of XML, then a list of 
 -- that something can also be represented as a list of XML.
 instance (IsXMLs a) => IsXMLs [a] where
  toXMLs as = do xmlss <- mapM toXMLs as
- 		return $ concat xmlss
+                return $ concat xmlss
 
 -- | An IO computation returning something that can be represented
 -- as a list of XML can be lifted into an analogous HSP computation.
@@ -165,7 +165,7 @@ instance (IsAttrValue a) => IsAttrValue (HSP a) where
 -- a comma separated, unbracketed sequence
 --instance (IsAttrValue a) => IsAttrValue [a] where
 -- toAttrValue as = do [/ (Value vs)* /] <- mapM toAttrValue as
--- 		     return . Value $ concat $ intersperse "," vs
+--                   return . Value $ concat $ intersperse "," vs
 
 
 -----------------------------------------------------------------------
@@ -183,7 +183,7 @@ instance IsAttribute Attribute where
 -- | Values of the Attr type, constructed with :=, can represent attributes.
 instance (IsName n, IsAttrValue a) => IsAttribute (Attr n a) where
  toAttribute (n := a) = do av <- toAttrValue a
- 			   return (toName n, av)
+                           return (toName n, av)
 
 -- | Attributes can be the result of an HSP computation.
 instance (IsAttribute a) => IsAttribute (HSP a) where
@@ -208,10 +208,10 @@ instance (IsAttribute a) => EmbedAsAttr a (HSP Attribute) where
 -- | Set attributes.
 instance SetAttr HSP' XML where
  setAll xml hats = do
-        attrs <- fmap concat $ sequence hats
-	case xml of
-	 CDATA _         -> return xml
-	 Element n as cs -> return $ Element n (foldr insert as attrs) cs
+        attrs <- hats
+        case xml of
+         CDATA _         -> return xml
+         Element n as cs -> return $ Element n (foldr insert as attrs) cs
 
 
 instance TypeCast (m x) (HSP' XML)
@@ -221,10 +221,10 @@ instance TypeCast (m x) (HSP' XML)
 -- | Append children.
 instance AppendChild HSP' XML where
  appAll xml children = do
-        css <- mapM toXMLs children
+        chs <- children
         case xml of
          CDATA _         -> return xml
-         Element n as cs -> return $ Element n as (cs ++ concat css)
+         Element n as cs -> return $ Element n as (cs ++ chs)
 
 instance TypeCast (m x) (HSP' XML) 
                 => AppendChild HSP' (XMLGenT m x) where
@@ -260,17 +260,17 @@ instance (Read a) => GetAttrValue a where
 -- a comma separated, unbracketed sequence
 instance (GetAttrValue a) => GetAttrValue [a] where
  fromAttrValue v@(Value str) = case str of
- 	[/ v1+, (/ ',', vs@:_+ /)+ /] -> 
- 		map (fromAttrValue . Value) (v1:vs)
- 	_ -> [fromAttrValue v]
+        [/ v1+, (/ ',', vs@:_+ /)+ /] -> 
+                map (fromAttrValue . Value) (v1:vs)
+        _ -> [fromAttrValue v]
 
 -- All that for these two functions
 extract :: (GetAttrValue a) => Name -> Attributes -> (Maybe a, Attributes)
 extract _ [] = (Nothing, [])
 extract name (p@(n, v):as) 
-	| name == n = (Just $ fromAttrValue v, as)
-	| otherwise = let (val, attrs) = extract name as
-		       in (val, p:attrs)
+        | name == n = (Just $ fromAttrValue v, as)
+        | otherwise = let (val, attrs) = extract name as
+                       in (val, p:attrs)
 
 
 --------------------------------------------------------------------
@@ -280,24 +280,24 @@ extract name (p@(n, v):as)
 --  | Generate an XML element from its components.
 element :: (IsName n, IsXMLs xmls, IsAttribute at) => n -> [at] -> xmls -> HSP XML
 element n attrs xmls = do
-	cxml <- toXMLs xmls
-	attribs <- mapM toAttribute attrs
-	return $ Element (toName n) 
-		   (foldr insert eAttrs attribs)
-		   (flattenCDATA cxml)
-	
+        cxml <- toXMLs xmls
+        attribs <- mapM toAttribute attrs
+        return $ Element (toName n) 
+                   (foldr insert eAttrs attribs)
+                   (flattenCDATA cxml)
+        
   where flattenCDATA :: [XML] -> [XML]
-  	flattenCDATA cxml = 
-  		case flP cxml [] of
-  		 [] -> []
-  		 [CDATA ""] -> []
-  		 xs -> xs  			
-  	flP :: [XML] -> [XML] -> [XML]
-  	flP [] bs = reverse bs
-  	flP [x] bs = reverse (x:bs)
-  	flP (x:y:xs) bs = case (x,y) of
-  			   (CDATA s1, CDATA s2) -> flP (CDATA (s1++s2) : xs) bs
-  			   _ -> flP (y:xs) (x:bs)
+        flattenCDATA cxml = 
+                case flP cxml [] of
+                 [] -> []
+                 [CDATA ""] -> []
+                 xs -> xs                       
+        flP :: [XML] -> [XML] -> [XML]
+        flP [] bs = reverse bs
+        flP [x] bs = reverse (x:bs)
+        flP (x:y:xs) bs = case (x,y) of
+                           (CDATA s1, CDATA s2) -> flP (CDATA (s1++s2) : xs) bs
+                           _ -> flP (y:xs) (x:bs)
 
 eAttrs :: Attributes
 eAttrs = []
