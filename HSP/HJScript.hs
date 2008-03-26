@@ -3,7 +3,7 @@ module HSP.HJScript where
 import HSP.Monad
 import HSP.XML
 import HSP.XMLGenerator
-import HJScript
+import HJScript hiding (Attr(..), genElement, genEElement, asAttr, asChild)
 
 import qualified HSX.XMLGenerator as HSX
 
@@ -70,15 +70,14 @@ ref xml = do
 -- Settting properties
 -------------------------------------------------
 
-setId :: (HSX.SetAttr m xml, HSX.EmbedAsAttr (Attr String v) (HSX.XMLGenT m (HSX.Attribute m))) 
+setId :: (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String v)) 
         => xml -> v -> HSX.XMLGenT m (HSX.XML m)
 setId x v = x `set` ("id" := v)
 
 
 
 -- Generel method for adding 'onEvent' attributes to XML elements.
---onEvent :: SetAttr xml (Attr String (HJScript ())) => Event -> xml -> HJScript () -> SetResult xml
-onEvent :: (HSX.SetAttr m xml, HSX.EmbedAsAttr (Attr String (HJScript ())) (HSX.XMLGenT m (HSX.Attribute m)))
+onEvent :: (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String (HJScript ())))
         => Event -> xml -> HJScript () -> HSX.XMLGenT m (HSX.XML m)
 onEvent event xml script = xml `set` (showEvent event := script)
 
@@ -86,7 +85,7 @@ onAbort, onBlur, onChange, onClick, onDblClick, onError,
   onFocus, onKeyDown, onKeyPress, onKeyUp, onLoad, onMouseDown,
   onMouseMove, onMouseOut, onMouseOver, onMouseUp, onReset,
   onResize, onSelect, onSubmit, onUnload :: 
-    (HSX.SetAttr m xml, HSX.EmbedAsAttr (Attr String (HJScript ())) (HSX.XMLGenT m (HSX.Attribute m)))
+    (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String (HJScript ())))
         => xml -> HJScript () -> HSX.XMLGenT m (HSX.XML m)
 
 onAbort     = onEvent OnAbort

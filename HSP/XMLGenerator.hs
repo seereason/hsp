@@ -25,13 +25,13 @@ import qualified HSX.XMLGenerator as HSX (XMLGenerator(..))
 -- | We can use literal XML syntax to generate values of type XML in the HSP monad.
 instance HSX.XMLGenerator HSP' where
  type HSX.XML HSP' = XML
- type HSX.Attribute HSP' = Attribute 
- type HSX.Child HSP' = XML
+ newtype HSX.Attribute HSP' = HSPAttr Attribute 
+ newtype HSX.Child     HSP' = HSPChild XML
  genElement = element
  genEElement = eElement
 
-instance (IsXMLs a) => EmbedAsChild a (HSP [XML]) where
- asChild = toXMLs
+instance (IsXMLs c) => EmbedAsChild HSP' c where
+ asChild = fmap (map HSPChild) . toXMLs
 
 
 -------------------------------------------------------------------
@@ -128,6 +128,9 @@ instance (IsXMLs a) => IsXMLs (Maybe a) where
  toXMLs Nothing = return []
  toXMLs (Just a) = toXMLs a
 
+instance IsXMLs (HSX.Child HSP') where
+ toXMLs (HSPChild x) = toXMLs x
+
 ---------------
 -- IsAttrValue
 
@@ -193,10 +196,13 @@ instance (IsAttribute a) => IsAttribute (HSP a) where
 instance (IsAttribute a) => IsAttribute (IO a) where
  toAttribute ioa = doIO ioa >>= toAttribute
 
+instance IsAttribute (HSX.Attribute HSP') where
+ toAttribute (HSPAttr a) = toAttribute a
+
 -- | Anything that can represent an attribute can also be embedded as attributes
 -- using the literal XML syntax.
-instance (IsAttribute a) => EmbedAsAttr a (HSP Attribute) where
- asAttr = toAttribute
+instance (IsAttribute a) => EmbedAsAttr HSP' a where
+ asAttr = fmap HSPAttr . toAttribute
 
 -- | Set an attribute to something in an XML element.
 --set :: (IsXML a, IsAttribute at) => a -> at -> HSP XML
@@ -211,7 +217,7 @@ instance SetAttr HSP' XML where
         attrs <- hats
         case xml of
          CDATA _         -> return xml
-         Element n as cs -> return $ Element n (foldr insert as attrs) cs
+         Element n as cs -> return $ Element n (foldr insert as (map stripAttr attrs)) cs
 
 
 instance TypeCast (m x) (HSP' XML)
@@ -224,7 +230,7 @@ instance AppendChild HSP' XML where
         chs <- children
         case xml of
          CDATA _         -> return xml
-         Element n as cs -> return $ Element n as (cs ++ chs)
+         Element n as cs -> return $ Element n as (cs ++ (map stripChild chs))
 
 instance TypeCast (m x) (HSP' XML) 
                 => AppendChild HSP' (XMLGenT m x) where
@@ -298,6 +304,9 @@ element n attrs xmls = do
         flP (x:y:xs) bs = case (x,y) of
                            (CDATA s1, CDATA s2) -> flP (CDATA (s1++s2) : xs) bs
                            _ -> flP (y:xs) (x:bs)
+
+stripAttr  (HSPAttr a) = a
+stripChild (HSPChild c) = c
 
 eAttrs :: Attributes
 eAttrs = []
