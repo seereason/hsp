@@ -1,6 +1,8 @@
 module HSP.HJScript where
 
-import HSP
+import HSP.Monad
+import HSP.XML
+import HSP.XMLGenerator
 import HJScript
 
 import qualified HSX.XMLGenerator as HSX
