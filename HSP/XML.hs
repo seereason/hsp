@@ -21,7 +21,7 @@ module HSP.XML (
         pcdata,
         cdata,
         -- * The Attribute type
-        Attribute,
+        Attribute(..),
         AttrValue(..),
         attrVal, pAttrVal,
         -- * Functions
@@ -117,7 +117,7 @@ renderTag typ n name attrs =
 
 
         renderAttr :: Attribute -> ShowS
-        renderAttr (nam, (Value val)) = showName nam . showChar '=' . renderAttrVal val
+        renderAttr (MkAttr (nam, (Value val))) = showName nam . showChar '=' . renderAttrVal val
 
         renderAttrVal :: String -> ShowS
         renderAttrVal s = showChar '\"' . showString s . showChar '\"'

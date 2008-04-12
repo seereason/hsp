@@ -187,7 +187,7 @@ instance Monad m => IsAttribute m Attribute where
 instance (IsName n, IsAttrValue m a) 
         => IsAttribute m (Attr n a) where
  toAttribute (n := a) = do av <- toAttrValue a
-                           return (toName n, av)
+                           return $ MkAttr (toName n, av)
 
 -- | Attributes can be the result of an HSP computation.
 instance IsAttribute m a => IsAttribute m (HSPT m a) where
