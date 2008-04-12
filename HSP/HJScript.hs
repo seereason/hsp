@@ -7,16 +7,16 @@ import HJScript hiding (Attr(..), genElement, genEElement, asAttr, asChild)
 
 import qualified HSX.XMLGenerator as HSX
 
-instance IsXMLs (Block ()) where
+instance Monad m => IsXMLs m (Block ()) where
   toXMLs b = toXMLs $
     <script language="JavaScript">
       <% cdata (show b) %>
     </script>
 
-instance IsXMLs (HJScript ()) where
+instance Monad m => IsXMLs m (HJScript ()) where
   toXMLs script = toXMLs . snd $ evalHJScript script 0
 
-instance IsAttrValue (HJScript ()) where
+instance Monad m => IsAttrValue m (HJScript ()) where
   toAttrValue script = do
     let block = snd $ evalHJScript script 0
     return . Value $ "javascript:" ++ show block

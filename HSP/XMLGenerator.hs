@@ -1,11 +1,11 @@
 module HSP.XMLGenerator (
         -- * Type classes
---        IsXML(..), 
+        IsXML(..), 
         IsXMLs(..), 
---        IsAttrValue(..),
---        IsAttribute(..),
+        IsAttrValue(..),
+        IsAttribute(..),
         
---        extract,
+        extract,
         
         module HSX.XMLGenerator, HSX.genElement, HSX.genEElement
 
@@ -156,7 +156,7 @@ instance Monad m => IsAttrValue m String where
 
 -- | An IO computation returning something that can be represented
 -- as an attribute value can be lifted into an analogous HSP computation.
-instance IsAttrValue m a => IsAttrValue m (m a) where
+instance IsAttrValue IO a => IsAttrValue IO (IO a) where
  toAttrValue ma = lift (lift ma) >>= toAttrValue
 
 -- | An HSP computation returning something that can be represented
