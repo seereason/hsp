@@ -30,8 +30,8 @@ instance Monad m => HSX.XMLGen (HSPT' m) where
  newtype HSX.Attribute (HSPT' m) = HSPAttr Attribute 
  newtype HSX.Child     (HSPT' m) = HSPChild XML
  xmlToChild = HSPChild
--- genElement = element
--- genEElement = eElement
+ genElement = element
+ genEElement = eElement
 
 instance (Monad m, IsXMLs m c) => EmbedAsChild (HSPT' m) c where
  asChild = liftM (map HSX.xmlToChild) . toXMLs
@@ -109,7 +109,7 @@ instance (IsXMLs m a, Monad m) => IsXMLs m [a] where
 
 -- | An IO computation returning something that can be represented
 -- as a list of XML can be lifted into an analogous HSP computation.
-instance (IsXMLs m a, Monad m) => IsXMLs m (m a) where
+instance (IsXMLs IO a) => IsXMLs IO (IO a) where
  toXMLs ma = lift (lift ma) >>= toXMLs
 
 -- | Any child elements that arise through the use of literal syntax should be of the same
@@ -194,7 +194,7 @@ instance IsAttribute m a => IsAttribute m (HSPT m a) where
  toAttribute hspa = hspa >>= toAttribute
 
 -- | ... or of an IO computation.
-instance IsAttribute m a => IsAttribute m (m a) where
+instance IsAttribute IO a => IsAttribute IO (IO a) where
  toAttribute ma = lift (lift ma) >>= toAttribute
 
 instance Monad m => IsAttribute m (HSX.Attribute (HSPT' m)) where
@@ -314,9 +314,7 @@ eAttrs :: Attributes
 eAttrs = []
 insert :: Attribute -> Attributes -> Attributes
 insert = (:)
-{-
--- | Generate an empty XML element.
-eElement :: (IsName n, IsAttribute at) => n -> [at] -> HSP XML
-eElement n attrs = element n attrs ([] :: [XML])
 
--}
+-- | Generate an empty XML element.
+eElement :: (IsName n, IsAttribute m at) => n -> [at] -> HSPT m XML
+eElement n attrs = element n attrs ([] :: [XML])
