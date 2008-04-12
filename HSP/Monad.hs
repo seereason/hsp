@@ -16,13 +16,13 @@
 -----------------------------------------------------------------------------
 
 module HSP.Monad (
-	-- * The 'HSP' Monad
-	HSP, HSP',
-	runHSP, evalHSP,
+        -- * The 'HSP' Monad
+        HSP, HSPT, HSPT',
+        runHSP, evalHSP,
         unsafeRunHSP,  -- dangerous!!
-	-- * Functions
-	getParam, getIncNumber, doIO, catch
-	) where
+        -- * Functions
+        getParam, getIncNumber, doIO, catch
+        ) where
 
 -- Monad imports
 import Control.Monad.Reader (ReaderT(..), ask, lift)
@@ -43,8 +43,13 @@ import HSX.XMLGenerator (XMLGenT(..), unXMLGenT)
 
 -- | The HSP monad is a reader wrapper around
 -- the IO monad, but extended with an XMLGenerator wrapper.
-type HSP' = ReaderT HSPEnv IO
-type HSP  = XMLGenT HSP'
+--type HSP' = ReaderT HSPEnv IO
+--type HSP  = XMLGenT HSP'
+
+type HSP =  HSPT IO
+
+type HSPT' m = ReaderT HSPEnv m
+type HSPT  m = XMLGenT (HSPT' m)
 
 -- do NOT export this in the final version
 dummyEnv :: HSPEnv
@@ -91,5 +96,5 @@ getIncNumber = getEnv >>= doIO . incNumber . getNG
 -- | Catch a user-caused exception.
 catch :: HSP a -> (Exception -> HSP a) -> HSP a
 catch (XMLGenT (ReaderT f)) handler = XMLGenT $ ReaderT $ \e ->
-	f e `catchDyn` (\ex -> (let (XMLGenT (ReaderT g)) = handler ex
-				 in g e))
+        f e `catchDyn` (\ex -> (let (XMLGenT (ReaderT g)) = handler ex
+                                 in g e))

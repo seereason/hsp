@@ -12,22 +12,22 @@
 -- the scenes of Haskell Server Pages tags.
 -----------------------------------------------------------------------------
 module HSP.XML (
-	-- * The 'XML' datatype
-	XML(..), 
-	Domain, 
-	Name, 
-	Attributes, 
-	Children,
-	pcdata,
-	cdata,
-	-- * The Attribute type
-	Attribute,
-	AttrValue(..),
-	attrVal, pAttrVal,
-	-- * Functions
-	renderXML,
-	isElement, isCDATA
-	) where
+        -- * The 'XML' datatype
+        XML(..), 
+        Domain, 
+        Name, 
+        Attributes, 
+        Children,
+        pcdata,
+        cdata,
+        -- * The Attribute type
+        Attribute,
+        AttrValue(..),
+        attrVal, pAttrVal,
+        -- * Functions
+        renderXML,
+        isElement, isCDATA
+        ) where
 
 import Data.List (intersperse)
 
@@ -42,7 +42,7 @@ type Children = [XML]
 
 -- | The XML datatype representation. Is either an Element or CDATA.
 data XML = Element Name Attributes Children
-	 | CDATA String
+         | CDATA String
   deriving Show
 
 {- instance Show XML where
@@ -62,7 +62,8 @@ pcdata = cdata . escape
 ---------------------------------------------------------------
 -- Attributes
 
-type Attribute = (Name, AttrValue)
+newtype Attribute = MkAttr (Name, AttrValue)
+  deriving Show
 
 -- | Represents an attribue value.
 newtype AttrValue = Value String
@@ -90,39 +91,39 @@ renderXML' :: Int -> XML -> ShowS
 renderXML' _ (CDATA cd) = showString cd
 renderXML' n (Element name attrs []) = renderTag Single n name attrs
 renderXML' n (Element name attrs children) =
-	let open  = renderTag Open n name attrs 
-	    cs    = renderChildren n children 
-	    close = renderTag Close n name []
-	 in open . cs . close
+        let open  = renderTag Open n name attrs 
+            cs    = renderChildren n children 
+            close = renderTag Close n name []
+         in open . cs . close
 
   where renderChildren :: Int -> Children -> ShowS
-	renderChildren n' cs = foldl (.) id $ map (renderXML' (n'+2)) cs
+        renderChildren n' cs = foldl (.) id $ map (renderXML' (n'+2)) cs
 
-		
+                
 renderTag :: TagType -> Int -> Name -> Attributes -> ShowS 
 renderTag typ n name attrs = 
-	let (start,end) = case typ of
-			   Open   -> (showChar '<', showChar '>')
-		     	   Close  -> (showString "</", showChar '>')
-		     	   Single -> (showChar '<', showString "/>")
-	    nam = showName name
-	    as  = renderAttrs attrs
-	 in start . nam . as . end
+        let (start,end) = case typ of
+                           Open   -> (showChar '<', showChar '>')
+                           Close  -> (showString "</", showChar '>')
+                           Single -> (showChar '<', showString "/>")
+            nam = showName name
+            as  = renderAttrs attrs
+         in start . nam . as . end
 
   where renderAttrs :: Attributes -> ShowS
-	renderAttrs [] = nl
-	renderAttrs attrs' = showChar ' ' . ats . nl
-	  where ats = foldl (.) id $ intersperse (showChar ' ') $ fmap renderAttr attrs'
+        renderAttrs [] = nl
+        renderAttrs attrs' = showChar ' ' . ats . nl
+          where ats = foldl (.) id $ intersperse (showChar ' ') $ fmap renderAttr attrs'
 
 
-	renderAttr :: Attribute -> ShowS
-	renderAttr (nam, (Value val)) = showName nam . showChar '=' . renderAttrVal val
+        renderAttr :: Attribute -> ShowS
+        renderAttr (nam, (Value val)) = showName nam . showChar '=' . renderAttrVal val
 
-	renderAttrVal :: String -> ShowS
-	renderAttrVal s = showChar '\"' . showString s . showChar '\"'
+        renderAttrVal :: String -> ShowS
+        renderAttrVal s = showChar '\"' . showString s . showChar '\"'
 
-	showName (Nothing, s) = showString s
-	showName (Just d, s)  = showString d . showChar ':' . showString s
+        showName (Nothing, s) = showString s
+        showName (Just d, s)  = showString d . showChar ':' . showString s
 
-	nl = showChar '\n' . showString (replicate n ' ')
+        nl = showChar '\n' . showString (replicate n ' ')
 
