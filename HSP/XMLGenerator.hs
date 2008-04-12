@@ -200,21 +200,21 @@ instance IsAttribute m a => IsAttribute m (m a) where
 instance Monad m => IsAttribute m (HSX.Attribute (HSPT' m)) where
  toAttribute (HSPAttr a) = toAttribute a
 
-{-
 -- | Anything that can represent an attribute can also be embedded as attributes
 -- using the literal XML syntax.
-instance (IsAttribute a) => EmbedAsAttr HSP' a where
+instance (IsAttribute m a) => EmbedAsAttr (HSPT' m) a where
  asAttr = fmap HSPAttr . toAttribute
 
+{-
 -- | Set an attribute to something in an XML element.
 --set :: (IsXML a, IsAttribute at) => a -> at -> HSP XML
 --set x a = setAll x [a]
 -}
 -----------------------------------------
 -- SetAttr and AppendChild
-{-
+
 -- | Set attributes.
-instance SetAttr HSP' XML where
+instance Monad m => SetAttr (HSPT' m) XML where
  setAll xml hats = do
         attrs <- hats
         case xml of
@@ -222,25 +222,26 @@ instance SetAttr HSP' XML where
          Element n as cs -> return $ Element n (foldr insert as (map stripAttr attrs)) cs
 
 
-instance TypeCast (m x) (HSP' XML)
-                => SetAttr HSP' (XMLGenT m x) where
+instance (Monad m1, TypeCast (m x) (HSPT' m1 XML))
+                => SetAttr (HSPT' m1) (XMLGenT m x) where
  setAll (XMLGenT hxml) ats = (XMLGenT $ typeCast hxml) >>= \xml -> setAll xml ats
 
+
 -- | Append children.
-instance AppendChild HSP' XML where
+instance Monad m => AppendChild (HSPT' m) XML where
  appAll xml children = do
         chs <- children
         case xml of
          CDATA _         -> return xml
          Element n as cs -> return $ Element n as (cs ++ (map stripChild chs))
 
-instance TypeCast (m x) (HSP' XML) 
-                => AppendChild HSP' (XMLGenT m x) where
+instance (Monad m1, TypeCast (m x) (HSPT' m1 XML))
+                => AppendChild (HSPT' m1) (XMLGenT m x) where
  appAll (XMLGenT hxml) chs = (XMLGenT $ typeCast hxml) >>= (flip appAll) chs
--}
+
 ---------------
 -- GetAttrValue
-{-
+
 -- | Instantiate this class to enable values of the given type
 -- to be retrieved through attribute patterns.
 class GetAttrValue a where
@@ -275,18 +276,17 @@ instance (GetAttrValue a) => GetAttrValue [a] where
 -- All that for these two functions
 extract :: (GetAttrValue a) => Name -> Attributes -> (Maybe a, Attributes)
 extract _ [] = (Nothing, [])
-extract name (p@(n, v):as) 
+extract name (p@(MkAttr (n, v)):as) 
         | name == n = (Just $ fromAttrValue v, as)
         | otherwise = let (val, attrs) = extract name as
                        in (val, p:attrs)
--}
 
 --------------------------------------------------------------------
 -- The base XML generation, corresponding to the use of the literal
 -- XML syntax.
-{-
+
 --  | Generate an XML element from its components.
-element :: (IsName n, IsXMLs xmls, IsAttribute at) => n -> [at] -> xmls -> HSP XML
+element :: (IsName n, IsXMLs m xmls, IsAttribute m at) => n -> [at] -> xmls -> HSPT m XML
 element n attrs xmls = do
         cxml <- toXMLs xmls
         attribs <- mapM toAttribute attrs
@@ -314,7 +314,7 @@ eAttrs :: Attributes
 eAttrs = []
 insert :: Attribute -> Attributes -> Attributes
 insert = (:)
-
+{-
 -- | Generate an empty XML element.
 eElement :: (IsName n, IsAttribute at) => n -> [at] -> HSP XML
 eElement n attrs = element n attrs ([] :: [XML])
