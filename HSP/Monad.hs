@@ -18,7 +18,7 @@
 module HSP.Monad (
         -- * The 'HSP' Monad
         HSP, HSPT, HSPT',
-        runHSP, evalHSP,
+        runHSP, evalHSP, runHSPT, evalHSPT, getEnv,
         unsafeRunHSP,  -- dangerous!!
         -- * Functions
         getParam, getIncNumber, doIO, catch
@@ -59,6 +59,12 @@ dummyEnv = undefined
 -- the result of running it will be an IO computation.
 runHSP :: HSP a -> HSPEnv -> IO a
 runHSP = runReaderT . unXMLGenT
+
+runHSPT :: HSPT m a -> HSPEnv -> m a
+runHSPT = runReaderT . unXMLGenT
+
+evalHSPT :: MonadIO m => HSPT m a -> m a
+evalHSPT hsp = liftIO mkSimpleEnv >>= runHSPT hsp
 
 evalHSP :: HSP a -> IO a
 evalHSP hsp = mkSimpleEnv >>= runHSP hsp 

@@ -1,6 +1,6 @@
 module HSP (
         -- module HSP.Monad
-        HSP, runHSP, evalHSP,
+        HSP, HSPT,runHSP, evalHSP, runHSPT, evalHSPT, getEnv,
         getParam, getIncNumber, doIO, catch,
         
         -- module HSP.Env
