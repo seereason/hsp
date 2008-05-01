@@ -16,14 +16,14 @@ instance Monad m => IsXMLs m (Block t) where
 instance Monad m => IsXMLs m (HJScript ()) where
   toXMLs script = toXMLs . snd $ evalHJScript script
 
-instance Monad m => IsXMLs m (HJScript (Exp t)) where
-  toXMLs script = toXMLs $ evaluateHJScript script
-
+instance Monad m => IsAttrValue m (Block t) where
+  toAttrValue block = return . Value $ "javascript:" ++ show block
 
 instance Monad m => IsAttrValue m (HJScript ()) where
-  toAttrValue script = do
-    let block = snd $ evalHJScript script
-    return . Value $ "javascript:" ++ show block
+  toAttrValue script = toAttrValue . snd $ evalHJScript script
+
+instance Monad m => IsAttrValue m (HJScript (Exp t)) where
+  toAttrValue script = toAttrValue $ evaluateHJScript script
 
 newGlobalVar :: HSP (Var t, Block ())
 newGlobalVar = do
@@ -81,16 +81,16 @@ setId x v = x `set` ("id" := v)
 
 
 -- Generel method for adding 'onEvent' attributes to XML elements.
-onEvent :: (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String (HJScript ())))
-        => Event -> xml -> HJScript () -> HSX.XMLGenT m (HSX.XML m)
+onEvent :: (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String (HJScript t)))
+        => Event -> xml -> HJScript t -> HSX.XMLGenT m (HSX.XML m)
 onEvent event xml script = xml `set` (showEvent event := script)
 
 onAbort, onBlur, onChange, onClick, onDblClick, onError,
   onFocus, onKeyDown, onKeyPress, onKeyUp, onLoad, onMouseDown,
   onMouseMove, onMouseOut, onMouseOver, onMouseUp, onReset,
   onResize, onSelect, onSubmit, onUnload :: 
-    (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String (HJScript ())))
-        => xml -> HJScript () -> HSX.XMLGenT m (HSX.XML m)
+    (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String (HJScript t)))
+        => xml -> HJScript t -> HSX.XMLGenT m (HSX.XML m)
 
 onAbort     = onEvent OnAbort
 onBlur      = onEvent OnBlur
