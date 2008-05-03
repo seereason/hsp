@@ -1,9 +1,9 @@
 module HSP.XMLGenerator (
         -- * Type classes
-        IsXML(..), 
-        IsXMLs(..), 
+--        IsXML(..), 
+--        IsXMLs(..), 
         IsAttrValue(..),
-        IsAttribute(..),
+--        IsAttribute(..),
         
         extract,
         
@@ -33,15 +33,19 @@ instance Monad m => HSX.XMLGen (HSPT' m) where
  genElement = element
  genEElement = eElement
 
-instance (Monad m, IsXMLs m c) => EmbedAsChild (HSPT' m) c where
- asChild = liftM (map HSX.xmlToChild) . toXMLs
+instance Monad m => EmbedAsChild (HSPT' m) XML where
+ asChild = return . return . HSPChild
 
+{-
+instance (Monad m,  m c) => EmbedAsChild (HSPT' m) c where
+ asChild = liftM (map HSX.xmlToChild) . toXMLs
+-}
 -------------------------------------------------------------------
 -- Type classes
 
 -------------
 -- IsXML
-
+{-
 -- | Instantiate this class to enable values of the given type
 -- to appear as XML elements.
 class IsXML a where
@@ -70,10 +74,10 @@ instance (IsXML a) => IsXML (IO a) where
 instance (IsXML a) => IsXML (HSP a) where
  toXML hspa = hspa >>= toXML
 
-
+-}
 -------------
 -- IsXMLs
-
+{-
 -- | Instantiate this class to enable values of the given type
 -- to be represented as a list of XML elements. Note that for
 -- any given type, only one of the two classes IsXML and IsXMLs
@@ -93,7 +97,7 @@ class Monad m => IsXMLs m a where
 -- | XML can naturally be represented as XML.
 instance Monad m => IsXMLs m XML where
  toXMLs = return . return
-
+-}
 
 -- | We must specify an extra rule for Strings even though the previous
 -- rule would apply, because the rule for [a] would also apply and
@@ -101,37 +105,52 @@ instance Monad m => IsXMLs m XML where
 instance Monad m => IsXMLs m String where
  toXMLs s = return [pcdata s]
 
+{-
 -- | If something can be represented as a list of XML, then a list of 
 -- that something can also be represented as a list of XML.
 instance (IsXMLs m a, Monad m) => IsXMLs m [a] where
  toXMLs as = do xmlss <- mapM toXMLs as
                 return $ concat xmlss
+-}
 
 -- | An IO computation returning something that can be represented
 -- as a list of XML can be lifted into an analogous HSP computation.
-instance (IsXMLs IO a) => IsXMLs IO (IO a) where
- toXMLs ma = lift (lift ma) >>= toXMLs
+--instance (IsXMLs IO a) => IsXMLs IO (IO a) where
+-- toXMLs ma = lift (lift ma) >>= toXMLs
 
+instance (EmbedAsChild (HSPT' IO) a) => EmbedAsChild (HSPT' IO) (IO a) where
+  asChild ma = lift (lift ma) >>= asChild
+{-
 -- | Any child elements that arise through the use of literal syntax should be of the same
 -- type as the parent element, unless explicitly given a different type. We use TypeCast
 -- to accomplish this. This also captures the case when the embedded value is an HSP computation.
 instance (IsXMLs m1 x, TypeCast (m x) (HSPT' m1 x)) => IsXMLs m1 (XMLGenT m x) where
  toXMLs (XMLGenT x) = (XMLGenT $ typeCast x) >>= toXMLs
+-}
 
 -- | Of the base types, () stands out as a type that can only be
 -- represented as a (empty) list of XML.
-instance Monad m => IsXMLs m () where
- toXMLs _ = return []
+--instance Monad m => IsXMLs m () where
+-- toXMLs _ = return []
+
+instance Monad m => EmbedAsChild (HSPT' m) () where
+  asChild () = return []
+
 
 -- | Maybe types are handy for cases where you might or might not want
 -- to generate XML, such as null values from databases
-instance (IsXMLs m a, Monad m) => IsXMLs m (Maybe a) where
- toXMLs Nothing = return []
- toXMLs (Just a) = toXMLs a
+--instance (IsXMLs m a, Monad m) => IsXMLs m (Maybe a) where
+-- toXMLs Nothing = return []
+-- toXMLs (Just a) = toXMLs a
 
+instance (Monad m, EmbedAsChild (HSPT' m) a) => EmbedAsChild (HSPT' m) (Maybe a) where
+  asChild Nothing  = return []
+  asChild (Just a) = asChild a
+
+{-
 instance Monad m => IsXMLs m (HSX.Child (HSPT' m)) where
  toXMLs (HSPChild x) = toXMLs x
-
+-}
 ---------------
 -- IsAttrValue
 
@@ -139,7 +158,6 @@ instance Monad m => IsXMLs m (HSX.Child (HSPT' m)) where
 -- to appear as XML attribute values.
 class Monad m => IsAttrValue m a where
  toAttrValue :: a -> HSPT m AttrValue
--- fromAttrValue :: AttrValue -> a
 
 -- | An AttrValue is trivial.
 instance Monad m => IsAttrValue m AttrValue where
@@ -173,30 +191,45 @@ instance (Monad m, IsAttrValue m a) => IsAttrValue m [a] where
 -}
 -----------------------------------------------------------------------
 -- Manipulating attributes
-
+{-
 -- | Just like with XML children, we want to conveniently allow values of various
 -- types to appear as attributes. 
 class Monad m => IsAttribute m a where
  toAttribute :: a -> HSPT m Attribute
-
+-}
 -- | Attributes can represent attributes. 
-instance Monad m => IsAttribute m Attribute where
- toAttribute = return
+--instance Monad m => IsAttribute m Attribute where
+-- toAttribute = return
+
+instance Monad m => EmbedAsAttr (HSPT' m) Attribute where
+  asAttr = return . return . HSPAttr
+
 
 -- | Values of the Attr type, constructed with :=, can represent attributes.
-instance (IsName n, IsAttrValue m a) 
-        => IsAttribute m (Attr n a) where
- toAttribute (n := a) = do av <- toAttrValue a
-                           return $ MkAttr (toName n, av)
+--instance (IsName n, IsAttrValue m a) 
+--        => IsAttribute m (Attr n a) where
+-- toAttribute (n := a) = do av <- toAttrValue a
+--                           return $ MkAttr (toName n, av)
 
+instance (IsName n, IsAttrValue m a) => EmbedAsAttr (HSPT' m) (Attr n a) where
+  asAttr (n := a) = do
+            av <- toAttrValue a
+            asAttr $ MkAttr (toName n, av)
+
+{-
 -- | Attributes can be the result of an HSP computation.
 instance IsAttribute m a => IsAttribute m (HSPT m a) where
  toAttribute hspa = hspa >>= toAttribute
+-}
 
 -- | ... or of an IO computation.
-instance IsAttribute IO a => IsAttribute IO (IO a) where
- toAttribute ma = lift (lift ma) >>= toAttribute
+--instance IsAttribute IO a => IsAttribute IO (IO a) where
+-- toAttribute ma = lift (lift ma) >>= toAttribute
 
+instance (EmbedAsAttr (HSPT' IO) a) => EmbedAsAttr (HSPT' IO) (IO a) where
+  asAttr ma = lift (lift ma) >>= asAttr
+
+{-
 instance Monad m => IsAttribute m (HSX.Attribute (HSPT' m)) where
  toAttribute (HSPAttr a) = toAttribute a
 
@@ -205,10 +238,6 @@ instance Monad m => IsAttribute m (HSX.Attribute (HSPT' m)) where
 instance (IsAttribute m a) => EmbedAsAttr (HSPT' m) a where
  asAttr = fmap HSPAttr . toAttribute
 
-{-
--- | Set an attribute to something in an XML element.
---set :: (IsXML a, IsAttribute at) => a -> at -> HSP XML
---set x a = setAll x [a]
 -}
 -----------------------------------------
 -- SetAttr and AppendChild
@@ -221,11 +250,11 @@ instance Monad m => SetAttr (HSPT' m) XML where
          CDATA _         -> return xml
          Element n as cs -> return $ Element n (foldr insert as (map stripAttr attrs)) cs
 
-
+{-
 instance (Monad m1, TypeCast (m x) (HSPT' m1 XML))
                 => SetAttr (HSPT' m1) (XMLGenT m x) where
  setAll (XMLGenT hxml) ats = (XMLGenT $ typeCast hxml) >>= \xml -> setAll xml ats
-
+-}
 
 -- | Append children.
 instance Monad m => AppendChild (HSPT' m) XML where
@@ -235,10 +264,11 @@ instance Monad m => AppendChild (HSPT' m) XML where
          CDATA _         -> return xml
          Element n as cs -> return $ Element n as (cs ++ (map stripChild chs))
 
+{-
 instance (Monad m1, TypeCast (m x) (HSPT' m1 XML))
                 => AppendChild (HSPT' m1) (XMLGenT m x) where
  appAll (XMLGenT hxml) chs = (XMLGenT $ typeCast hxml) >>= (flip appAll) chs
-
+-}
 ---------------
 -- GetAttrValue
 
@@ -286,13 +316,16 @@ extract name (p@(MkAttr (n, v)):as)
 -- XML syntax.
 
 --  | Generate an XML element from its components.
-element :: (IsName n, IsXMLs m xmls, IsAttribute m at) => n -> [at] -> xmls -> HSPT m XML
+element :: (IsName n, 
+            EmbedAsChild (HSPT' m) xmls, 
+            EmbedAsAttr (HSPT' m) at) 
+         => n -> [at] -> xmls -> HSPT m XML
 element n attrs xmls = do
-        cxml <- toXMLs xmls
-        attribs <- mapM toAttribute attrs
+        cxml <- asChild xmls
+        attribs <- asAttr attrs
         return $ Element (toName n) 
-                   (foldr insert eAttrs attribs)
-                   (flattenCDATA cxml)
+                   (foldr insert eAttrs $ map stripAttr attribs)
+                   (flattenCDATA $ map stripChild cxml)
         
   where flattenCDATA :: [XML] -> [XML]
         flattenCDATA cxml = 
@@ -316,5 +349,5 @@ insert :: Attribute -> Attributes -> Attributes
 insert = (:)
 
 -- | Generate an empty XML element.
-eElement :: (IsName n, IsAttribute m at) => n -> [at] -> HSPT m XML
+eElement :: (IsName n, Monad m, EmbedAsAttr (HSPT' m) at) => n -> [at] -> HSPT m XML
 eElement n attrs = element n attrs ([] :: [XML])

@@ -3,18 +3,18 @@ module HSP.HJScript where
 import HSP.Monad
 import HSP.XML
 import HSP.XMLGenerator
-import HJScript hiding (Attr(..), genElement, genEElement, asAttr, asChild)
+import HJScript -- hiding (( := )(..), genElement, genEElement, asAttr, asChild)
 
 import qualified HSX.XMLGenerator as HSX
 
-instance Monad m => IsXMLs m (Block t) where
-  toXMLs b = toXMLs $
+instance Monad m => EmbedAsChild (HSPT' m) (Block t) where
+  asChild b = asChild $
     <script language="JavaScript">
       <% cdata (show b) %>
     </script>
 
-instance Monad m => IsXMLs m (HJScript ()) where
-  toXMLs script = toXMLs . snd $ evalHJScript script
+instance Monad m => EmbedAsChild (HSPT' m) (HJScript ()) where
+  asChild script = asChild . snd $ evalHJScript script
 
 instance Monad m => IsAttrValue m (Block t) where
   toAttrValue block = return . Value $ "javascript:" ++ show block
