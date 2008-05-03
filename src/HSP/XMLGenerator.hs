@@ -17,10 +17,11 @@ import HSP.XML hiding (Name)
 import HSX.XMLGenerator hiding (XMLGen(..))
 import qualified HSX.XMLGenerator as HSX (XMLGen(..))
 
-import Control.Monad (liftM)
+--import Control.Monad (liftM)
 import Control.Monad.Trans (lift)
 
-import Data.List (intersperse)
+--import Data.List (intersperse)
+
 ---------------------------------------------
 -- Instantiating XMLGenerator for the HSP monad.
 

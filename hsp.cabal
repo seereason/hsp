@@ -28,7 +28,7 @@ Hs-Source-Dirs:         src
 Exposed-Modules:        HSP.XML, HSP.XML.PCDATA, HSP.Env, HSP.Env.Request, HSP.Env.NumberGen, HSP.HJScript, HSP
 Other-Modules:          HSP.Exception, HSP.Monad, HSP.XMLGenerator
 
-GHC-Options:            -F -pgmFtrhsx -Wall
+GHC-Options:            -F -pgmFtrhsx -Wall -fno-warn-orphans
 Extensions:             MultiParamTypeClasses,
                         FunctionalDependencies,
                         TypeFamilies,

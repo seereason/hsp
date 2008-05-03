@@ -76,9 +76,7 @@ ref xml = do
 
 setId :: (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String v)) 
         => xml -> v -> HSX.XMLGenT m (HSX.XML m)
-setId x v = x `set` ("id" := v)
-
-
+setId e v = e `set` ("id" := v)
 
 -- Generel method for adding 'onEvent' attributes to XML elements.
 onEvent :: (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String (HJScript t)))
