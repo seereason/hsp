@@ -102,8 +102,11 @@ instance Monad m => IsXMLs m XML where
 -- | We must specify an extra rule for Strings even though the previous
 -- rule would apply, because the rule for [a] would also apply and
 -- would be more specific.
-instance Monad m => IsXMLs m String where
- toXMLs s = return [pcdata s]
+--instance Monad m => IsXMLs m String where
+-- toXMLs s = return [pcdata s]
+
+instance Monad m => EmbedAsChild (HSPT' m) String where
+ asChild = asChild . pcdata
 
 {-
 -- | If something can be represented as a list of XML, then a list of 
