@@ -155,6 +155,11 @@ instance (Monad m, EmbedAsChild (HSPT' m) a) => EmbedAsChild (HSPT' m) (Maybe a)
 instance Monad m => IsXMLs m (HSX.Child (HSPT' m)) where
  toXMLs (HSPChild x) = toXMLs x
 -}
+
+-- This instance should already be there, probably doesn't work due
+-- to type families not being fully supported yet.
+instance Monad m => EmbedAsChild (HSPT' m) XML where
+ asChild = return . return . HSX.xmlToChild
 ---------------
 -- IsAttrValue
 
