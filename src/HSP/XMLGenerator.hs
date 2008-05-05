@@ -34,9 +34,6 @@ instance Monad m => HSX.XMLGen (HSPT' m) where
  genElement = element
  genEElement = eElement
 
-instance Monad m => EmbedAsChild (HSPT' m) XML where
- asChild = return . return . HSPChild
-
 {-
 instance (Monad m,  m c) => EmbedAsChild (HSPT' m) c where
  asChild = liftM (map HSX.xmlToChild) . toXMLs
