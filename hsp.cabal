@@ -25,7 +25,7 @@ Build-Type:             Simple
 Tested-With:            GHC==6.8.3
 
 Hs-Source-Dirs:         src
-Exposed-Modules:        HSP.XML, HSP.XML.PCDATA, HSP.Env, HSP.Env.Request, HSP.Env.NumberGen, HSP.HJScript, HSP
+Exposed-Modules:        HSP.XML, HSP.XML.PCDATA, HSP.HTML, HSP.Env, HSP.Env.Request, HSP.Env.NumberGen, HSP.HJScript, HSP
 Other-Modules:          HSP.Exception, HSP.Monad, HSP.XMLGenerator
 
 GHC-Options:            -F -pgmFtrhsx -Wall -fno-warn-orphans

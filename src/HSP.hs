@@ -9,6 +9,9 @@ module HSP (
         -- module HSP.XML[.PCDATA]
         module HSP.XML,
         module HSP.XML.PCDATA,
+
+        -- module HSP.HTML
+        module HSP.HTML,
         
         -- module HSP.XMLGenerator
         module HSP.XMLGenerator,
@@ -24,5 +27,6 @@ import HSP.Monad
 import HSP.Env hiding (mkSimpleEnv)
 import HSP.XML hiding (Name)
 import HSP.XML.PCDATA
+import HSP.HTML
 import HSP.XMLGenerator
 import HSP.HJScript
