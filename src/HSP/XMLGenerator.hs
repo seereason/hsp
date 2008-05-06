@@ -346,7 +346,9 @@ element n attrs xmls = do
                            (CDATA s1, CDATA s2) -> flP (CDATA (s1++s2) : xs) bs
                            _ -> flP (y:xs) (x:bs)
 
+stripAttr :: HSX.Attribute (HSPT' m) -> Attribute
 stripAttr  (HSPAttr a) = a
+stripChild :: HSX.Child (HSPT' m) -> XML
 stripChild (HSPChild c) = c
 
 eAttrs :: Attributes
