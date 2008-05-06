@@ -34,6 +34,8 @@ instance Monad m => HSX.XMLGen (HSPT' m) where
  genElement = element
  genEElement = eElement
 
+instance Monad m => XMLGenerator (HSPT' m)
+
 {-
 instance (Monad m,  m c) => EmbedAsChild (HSPT' m) c where
  asChild = liftM (map HSX.xmlToChild) . toXMLs
@@ -106,6 +108,9 @@ instance Monad m => IsXMLs m XML where
 instance Monad m => EmbedAsChild (HSPT' m) String where
  asChild = asChild . pcdata
 
+instance Monad m => EmbedAsChild (HSPT' m) Char where
+ asChild = asChild . (:[])
+
 {-
 -- | If something can be represented as a list of XML, then a list of 
 -- that something can also be represented as a list of XML.
@@ -172,6 +177,15 @@ instance Monad m => IsAttrValue m AttrValue where
 -- | Strings can be directly represented as values.
 instance Monad m => IsAttrValue m String where
  toAttrValue = return . pAttrVal
+
+instance Monad m => IsAttrValue m Int where
+ toAttrValue = toAttrValue . show
+
+-- Yeah yeah, map toLower . show, but I'm too
+-- lazy to go import Data.Char
+instance Monad m => IsAttrValue m Bool where
+ toAttrValue True = toAttrValue "true"
+ toAttrValue False = toAttrValue "false"
 
 -- | Anything that can be shown can always fall back on
 -- that as a default behavior.
