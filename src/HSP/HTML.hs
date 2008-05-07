@@ -49,7 +49,7 @@ data TagType = Open | Close
 
 renderAsHTML' :: Int -> XML -> ShowS
 renderAsHTML' _ (CDATA cd) = showString cd
-renderAsHTML' n (Element name@(domain,nm) attrs children) 
+renderAsHTML' n (Element name@(Nothing,nm) attrs children) 
     | nm == "area"	= renderTagEmpty children
     | nm == "base"	= renderTagEmpty children
     | nm == "br"        = renderTagEmpty children
@@ -60,16 +60,18 @@ renderAsHTML' n (Element name@(domain,nm) attrs children)
     | nm == "link"      = renderTagEmpty children
     | nm == "meta"      = renderTagEmpty children
     | nm == "param"     = renderTagEmpty children
-    | otherwise	        = 
+    where
+      renderTagEmpty [] = renderTag Open n name attrs
+      renderTagEmpty cs = error $ (filter (/= '\n') (renderTag Open 0 name attrs " should be empty, but contains children:")) ++ "\n" ++ 
+                            (foldr (renderAsHTML' 0) "" cs)
+renderAsHTML' n (Element name attrs children) =
         let open  = renderTag Open n name attrs 
             cs    = renderChildren n children 
             close = renderTag Close n name []
          in open . cs . close
   where renderChildren :: Int -> Children -> ShowS
         renderChildren n' cs = foldl (.) id $ map (renderAsHTML' (n'+2)) cs
-        renderTagEmpty [] = renderTag Open n name attrs
-        renderTagEmpty cs = error $ (filter (/= '\n') (renderTag Open 0 name attrs " should be empty, but contains children:")) ++ "\n" ++ 
-                            (foldr (renderAsHTML' 0) "" cs)
+
 
                 
 renderTag :: TagType -> Int -> Name -> Attributes -> ShowS 
