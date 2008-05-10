@@ -10,7 +10,7 @@ import qualified HSX.XMLGenerator as HSX
 instance Monad m => EmbedAsChild (HSPT' m) (Block t) where
   asChild b = asChild $
     <script type="text/javascript">
-      <% cdata (show b) %>
+      <% show b %>
     </script>
 
 instance Monad m => EmbedAsChild (HSPT' m) (HJScript ()) where
