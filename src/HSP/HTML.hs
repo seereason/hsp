@@ -62,7 +62,7 @@ renderAsHTML' n (Element name@(Nothing,nm) attrs children)
     | nm == "param"     = renderTagEmpty children
     where
       renderTagEmpty [] = renderTag Open n name attrs
-      renderTagEmpty cs = error $ (filter (/= '\n') (renderTag Open 0 name attrs " should be empty, but contains children:")) ++ "\n" ++ 
+      renderTagEmpty cs = error $ (filter ( /= '\n') (renderTag Open 0 name attrs " should be empty, but contains children:")) ++ "\n" ++ 
                             (foldr (renderAsHTML' 0) "" cs)
 renderAsHTML' n (Element name attrs children) =
         let open  = renderTag Open n name attrs 
