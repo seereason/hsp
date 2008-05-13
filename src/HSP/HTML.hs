@@ -24,15 +24,31 @@ module HSP.HTML (
 
 import Data.List
 import HSP.XML
+import HSP.XML.PCDATA(unescape)
 
 -- | Pretty-prints HTML values.
 -- FIXME: also verify that the domain is correct
 -- FIXME: what to do if a namespace is encountered
--- FIXME: what to do with xmlns in html tag
--- TODO: add strict mode which runs a validator (that probably belongs in the function which calls renderAsHTML)
--- FIXME: elements which forbid and end tag, should perhaps not contain children ?
 --
--- NOTE: this can throw errors, but you have to be in the IO monad to
+-- Error Handling:
+--
+-- Some tags (such as img) can not contain children in HTML. However,
+-- there is nothing to stop the caller from passing in XML which
+-- contains an img tag with children. There are three basic ways to
+-- handle this:
+--
+--  1. drop the bogus children silently
+--  2. call 'error' / raise an exception
+--  3. render the img tag with children -- even though it is invalid
+--
+-- Currently we are taking approach #3, since no other attempts to
+-- validate the data are made in this function. Instead, you can run
+-- the output through a full HTML validator to detect the errors.
+--
+-- #1 seems like a poor choice, since it makes is easy to overlook the
+-- fact that data went missing.
+--
+-- We could raising errors, but you have to be in the IO monad to
 -- catch them. Also, you have to use evaluate if you want to check for
 -- errors. This means you can not start sending the page until the
 -- whole page has been rendered. And you have to store the whole page
@@ -49,7 +65,7 @@ data TagType = Open | Close
 
 renderAsHTML' :: Int -> XML -> ShowS
 renderAsHTML' _ (CDATA cd) = showString cd
-renderAsHTML' n (Element name@(Nothing,nm) attrs children) 
+renderAsHTML' n elm@(Element name@(Nothing,nm) attrs children) 
     | nm == "area"	= renderTagEmpty children
     | nm == "base"	= renderTagEmpty children
     | nm == "br"        = renderTagEmpty children
@@ -60,11 +76,25 @@ renderAsHTML' n (Element name@(Nothing,nm) attrs children)
     | nm == "link"      = renderTagEmpty children
     | nm == "meta"      = renderTagEmpty children
     | nm == "param"     = renderTagEmpty children
+    | nm == "script"    = renderTagCDATA children
+    | nm == "style"     = renderTagCDATA children
     where
       renderTagEmpty [] = renderTag Open n name attrs
-      renderTagEmpty cs = error $ (filter ( /= '\n') (renderTag Open 0 name attrs " should be empty, but contains children:")) ++ "\n" ++ 
-                            (foldr (renderAsHTML' 0) "" cs)
-renderAsHTML' n (Element name attrs children) =
+      renderTagEmpty _ = renderElement n elm -- ^ this case should not happen in valid HTML
+      renderTagCDATA :: Children -> ShowS
+      renderTagCDATA children =
+        let open  = renderTag Open n name attrs 
+            cs    = renderChildrenCDATA 0 children 
+            close = renderTag Close n name []
+        in
+          open . cs .close
+      renderChildrenCDATA :: Int -> Children -> ShowS
+      renderChildrenCDATA n' cs = foldl (.) id $ map (renderChildCDATA (n'+2)) cs
+      renderChildCDATA n (CDATA cd) = showString (unescape cd)
+      renderChildCDATA n e = renderElement n e  -- ^ this case should not happen in valid HTML
+renderAsHTML' n e = renderElement n e
+
+renderElement n (Element name attrs children) =
         let open  = renderTag Open n name attrs 
             cs    = renderChildren n children 
             close = renderTag Close n name []
@@ -72,8 +102,6 @@ renderAsHTML' n (Element name attrs children) =
   where renderChildren :: Int -> Children -> ShowS
         renderChildren n' cs = foldl (.) id $ map (renderAsHTML' (n'+2)) cs
 
-
-                
 renderTag :: TagType -> Int -> Name -> Attributes -> ShowS 
 renderTag typ n name attrs = 
         let (start,end) = case typ of
@@ -99,6 +127,3 @@ renderTag typ n name attrs =
         showName (Just d, s)  = showString d . showChar ':' . showString s
 
         nl = showChar '\n' . showString (replicate n ' ')
-
-
-
