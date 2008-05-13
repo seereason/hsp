@@ -319,7 +319,7 @@ instance (Read a) => GetAttrValue a where
 -- a comma separated, unbracketed sequence
 instance (GetAttrValue a) => GetAttrValue [a] where
  fromAttrValue v@(Value str) = case str of
-        [ v1+, (/ ',', vs@:(_+) /)+ ] -> 
+        [ v1+, (| ',', vs@:(_+) |)+ ] -> 
                 map (fromAttrValue . Value) (v1:vs)
         _ -> [fromAttrValue v]
 
