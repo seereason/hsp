@@ -17,15 +17,18 @@
 
 module HSP.Monad (
         -- * The 'HSP' Monad
-        HSP, HSPT, HSPT',
+        HSP, HSPT, HSPT', XMLMetaData(..), html4Strict, html4StrictFrag,
         runHSP, evalHSP, runHSPT, evalHSPT, getEnv,
         unsafeRunHSP,  -- dangerous!!
         -- * Functions
-        getParam, getIncNumber, doIO, catch
+        getParam, getIncNumber, doIO, catch,
+        setMetaData, withMetaData
         ) where
 
 -- Monad imports
-import Control.Monad.Reader (ReaderT(..), ask, lift)
+-- import Control.Monad.Reader (ReaderT(..), ask, lift)
+import Control.Monad.RWS (RWST(..), ask, lift, put)
+import Control.Monad.State
 import Control.Monad.Trans (MonadIO(..))
 
 import Prelude hiding (catch)
@@ -36,6 +39,8 @@ import HSP.Exception
 
 import HSP.Env
 
+import HSP.XML
+import HSP.HTML
 import HSX.XMLGenerator (XMLGenT(..), unXMLGenT)
 
 --------------------------------------------------------------
@@ -48,7 +53,27 @@ import HSX.XMLGenerator (XMLGenT(..), unXMLGenT)
 
 type HSP =  HSPT IO
 
-type HSPT' m = ReaderT HSPEnv m
+data XMLMetaData = XMLMetaData
+  {  doctype :: (Bool, String)
+  ,  contentType :: String
+  ,  preferredRenderer :: XML -> String
+  } 
+
+html4Strict :: Maybe XMLMetaData
+html4Strict = Just $
+    XMLMetaData { doctype = (True, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n")
+                , contentType = "text/html"
+                , preferredRenderer = renderAsHTML
+                }
+
+html4StrictFrag :: Maybe XMLMetaData
+html4StrictFrag = Just $
+    XMLMetaData { doctype = (False, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n")
+                , contentType = "text/html"
+                , preferredRenderer = renderAsHTML
+                }
+
+type HSPT' m = RWST HSPEnv () (Maybe XMLMetaData) m
 type HSPT  m = XMLGenT (HSPT' m)
 
 -- do NOT export this in the final version
@@ -57,26 +82,35 @@ dummyEnv = undefined
 
 -- | Runs a HSP computation in a particular environment. Since HSP wraps the IO monad,
 -- the result of running it will be an IO computation.
-runHSP :: HSP a -> HSPEnv -> IO a
-runHSP = runReaderT . unXMLGenT
+runHSP :: HSP a -> HSPEnv -> Maybe XMLMetaData -> IO (Maybe XMLMetaData, a)
+runHSP hsp hspEnv xmd = runRWST (unXMLGenT hsp) hspEnv xmd >>= \(a,md,()) -> return (md, a)
 
-runHSPT :: HSPT m a -> HSPEnv -> m a
-runHSPT = runReaderT . unXMLGenT
+runHSPT :: (Monad m) => HSPT m a -> HSPEnv -> Maybe XMLMetaData -> m (Maybe XMLMetaData, a)
+runHSPT hsp hspEnv xmd = runRWST (unXMLGenT hsp) hspEnv xmd >>= \(a,md,()) -> return (md, a)
 
-evalHSPT :: MonadIO m => HSPT m a -> m a
-evalHSPT hsp = liftIO mkSimpleEnv >>= runHSPT hsp
+evalHSPT :: MonadIO m => HSPT m a -> Maybe XMLMetaData -> m (Maybe XMLMetaData, a)
+evalHSPT hsp xmd = liftIO mkSimpleEnv >>= \env -> runHSPT hsp env xmd
 
-evalHSP :: HSP a -> IO a
-evalHSP hsp = mkSimpleEnv >>= runHSP hsp 
+evalHSP :: HSP a -> Maybe XMLMetaData -> IO (Maybe XMLMetaData, a)
+evalHSP hsp xmd = mkSimpleEnv >>= \env -> runHSP hsp env xmd
 
 -- | Runs a HSP computation without an environment. Will work if the page in question does
 -- not touch the environment. Not sure about the usefulness at this stage though...
-unsafeRunHSP :: HSP a -> IO a
-unsafeRunHSP hspf = runHSP hspf dummyEnv
+unsafeRunHSP :: HSP a -> IO (Maybe XMLMetaData, a)
+unsafeRunHSP hspf = runHSP hspf dummyEnv Nothing
 
 -- | Execute an IO computation within the HSP monad.
 doIO :: IO a -> HSP a
 doIO = liftIO
+
+setMetaData :: (Monad m) => (Maybe XMLMetaData) -> HSPT m ()
+setMetaData xmd = lift (put xmd)
+
+withMetaData :: (Monad m) => Maybe XMLMetaData -> HSPT m a -> HSPT m a
+withMetaData xmd h = do
+  x <- h
+  setMetaData xmd
+  return x
 
 ----------------------------------------------------------------
 -- Environment stuff
@@ -101,6 +135,6 @@ getIncNumber = getEnv >>= doIO . incNumber . getNG
 
 -- | Catch a user-caused exception.
 catch :: HSP a -> (Exception -> HSP a) -> HSP a
-catch (XMLGenT (ReaderT f)) handler = XMLGenT $ ReaderT $ \e ->
-        f e `catchDyn` (\ex -> (let (XMLGenT (ReaderT g)) = handler ex
-                                 in g e))
+catch (XMLGenT (RWST f)) handler = XMLGenT $ RWST $ \e s ->
+        f e s `catchDyn` (\ex -> (let (XMLGenT (RWST g)) = handler ex
+                                 in g e s))
