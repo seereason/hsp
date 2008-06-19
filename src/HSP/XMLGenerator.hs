@@ -267,7 +267,7 @@ instance Monad m => SetAttr (HSPT' m) XML where
  setAll xml hats = do
         attrs <- hats
         case xml of
-         CDATA _         -> return xml
+         CDATA _ _       -> return xml
          Element n as cs -> return $ Element n (foldr insert as (map stripAttr attrs)) cs
 
 {-
@@ -281,7 +281,7 @@ instance Monad m => AppendChild (HSPT' m) XML where
  appAll xml children = do
         chs <- children
         case xml of
-         CDATA _         -> return xml
+         CDATA _ _       -> return xml
          Element n as cs -> return $ Element n as (cs ++ (map stripChild chs))
 
 {-
@@ -351,13 +351,13 @@ element n attrs xmls = do
         flattenCDATA cxml = 
                 case flP cxml [] of
                  [] -> []
-                 [CDATA ""] -> []
+                 [CDATA _ ""] -> []
                  xs -> xs                       
         flP :: [XML] -> [XML] -> [XML]
         flP [] bs = reverse bs
         flP [x] bs = reverse (x:bs)
         flP (x:y:xs) bs = case (x,y) of
-                           (CDATA s1, CDATA s2) -> flP (CDATA (s1++s2) : xs) bs
+                           (CDATA e1 s1, CDATA e2 s2) | e1 == e2 -> flP (CDATA e1 (s1++s2) : xs) bs
                            _ -> flP (y:xs) (x:bs)
 
 stripAttr :: HSX.Attribute (HSPT' m) -> Attribute

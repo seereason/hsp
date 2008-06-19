@@ -42,7 +42,7 @@ type Children = [XML]
 
 -- | The XML datatype representation. Is either an Element or CDATA.
 data XML = Element Name Attributes Children
-         | CDATA String
+         | CDATA Bool String
   deriving Show
 
 {- instance Show XML where
@@ -56,8 +56,8 @@ isCDATA = not . isElement
 
 -- | Embeds a string as a CDATA XML value.
 cdata , pcdata :: String -> XML
-cdata  = CDATA
-pcdata = cdata . escape
+cdata  = CDATA False
+pcdata = CDATA True
 
 ---------------------------------------------------------------
 -- Attributes
@@ -88,7 +88,7 @@ renderXML xml = renderXML' 0 xml ""
 data TagType = Open | Close | Single
 
 renderXML' :: Int -> XML -> ShowS
-renderXML' _ (CDATA cd) = showString cd
+renderXML' _ (CDATA needsEscape cd) = showString (if needsEscape then escape cd else cd)
 renderXML' n (Element name attrs []) = renderTag Single n name attrs
 renderXML' n (Element name attrs children) =
         let open  = renderTag Open n name attrs 

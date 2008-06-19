@@ -13,22 +13,37 @@
 module HSP.XML.PCDATA (
 	  escape	-- :: String -> String
 	, unescape	-- :: String -> String
+        , escaper
+        , unescaper
+        , xmlEscapeChars
 	) where
 
 
 -- | Take a normal string and transform it to PCDATA by escaping special characters.
+-- calls 'escaper' with 'xmlEscapeChars'
+-- See also: 'escaper'
 escape :: String -> String
-escape [] = ""
-escape (c:cs) = pChar c ++ escape cs
+escape = escaper xmlEscapeChars
 
-pChar :: Char -> String
-pChar c = case lookup c escapeChars of
-	   Nothing -> [c]
-	   Just s  -> '&' : s ++ ";"
+-- | Take a normal string and transform it to PCDATA by escaping special characters.
+-- See also: 'escape', 'xmlEscapeChars'
+escaper :: [(Char, String)] -- ^ table of escape characters
+        -> String -- ^ String to escape
+        -> String -- ^ Escaped String
+escaper _ [] = ""
+escaper escapeChars (c:cs) = pChar escapeChars c ++ escaper escapeChars cs
+
+pChar :: [(Char, String)] -- ^ table of escape characters
+      -> Char -- ^ character to escape
+      -> String -- ^ escaped character
+pChar escapeChars c = 
+    case lookup c escapeChars of
+      Nothing -> [c]
+      Just s  -> '&' : s ++ ";"
 
 -- This list should be extended.
-escapeChars :: [(Char, String)]
-escapeChars = [
+xmlEscapeChars :: [(Char, String)]
+xmlEscapeChars = [
 	('&',	"amp"	),
 	('\"',	"quot"	),
 	('\'',	"apos"	),
@@ -39,8 +54,19 @@ escapeChars = [
 -- | Take a PCDATA string and translate all escaped characters in it to the normal
 -- characters they represent.
 -- Does no error checking of input string, will fail if input is not valid PCDATA.
+-- calls 'unescaper' with 'xmlEscapeChars'
+-- See also: 'unescaper'
 unescape :: String -> String
-unescape = reverse . unE ""
+unescape = unescaper xmlEscapeChars
+
+-- | Take a PCDATA string and translate all escaped characters in it to the normal
+-- characters they represent.
+-- Does no error checking of input string, will fail if input is not valid PCDATA.
+-- See also: 'unescape', 'xmlEscapeChars'
+unescaper :: [(Char, String)] -- ^ table of escape characters
+          -> String -- ^ String to unescape
+          -> String -- ^ unescaped String
+unescaper escapeChars = reverse . unE ""
   where unE acc "" = acc
   	unE acc (c:cs) = 
   	  case c of

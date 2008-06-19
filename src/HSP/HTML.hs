@@ -19,12 +19,13 @@
 -----------------------------------------------------------------------------
 module HSP.HTML (
                  -- * Functions
-                 renderAsHTML
+                  renderAsHTML
+                , htmlEscapeChars
                 ) where
 
 import Data.List
 import HSP.XML
-import HSP.XML.PCDATA(unescape)
+import HSP.XML.PCDATA(escaper)
 
 -- | Pretty-prints HTML values.
 -- FIXME: also verify that the domain is correct
@@ -64,7 +65,7 @@ renderAsHTML xml = renderAsHTML' 0 xml ""
 data TagType = Open | Close
 
 renderAsHTML' :: Int -> XML -> ShowS
-renderAsHTML' _ (CDATA cd) = showString cd
+renderAsHTML' _ (CDATA needsEscape cd) = showString (if needsEscape then (escaper htmlEscapeChars cd) else cd)
 renderAsHTML' n elm@(Element name@(Nothing,nm) attrs children) 
     | nm == "area"	= renderTagEmpty children
     | nm == "base"	= renderTagEmpty children
@@ -76,22 +77,15 @@ renderAsHTML' n elm@(Element name@(Nothing,nm) attrs children)
     | nm == "link"      = renderTagEmpty children
     | nm == "meta"      = renderTagEmpty children
     | nm == "param"     = renderTagEmpty children
-    | nm == "script"    = renderTagCDATA children
-    | nm == "style"     = renderTagCDATA children
+    | nm == "script"    = renderElement n (Element name attrs (map asCDATA children))
+    | nm == "style"     = renderElement n (Element name attrs (map asCDATA children))
     where
       renderTagEmpty [] = renderTag Open n name attrs
       renderTagEmpty _ = renderElement n elm -- ^ this case should not happen in valid HTML
-      renderTagCDATA :: Children -> ShowS
-      renderTagCDATA children =
-        let open  = renderTag Open n name attrs 
-            cs    = renderChildrenCDATA 0 children 
-            close = renderTag Close n name []
-        in
-          open . cs .close
-      renderChildrenCDATA :: Int -> Children -> ShowS
-      renderChildrenCDATA n' cs = foldl (.) id $ map (renderChildCDATA (n'+2)) cs
-      renderChildCDATA n (CDATA cd) = showString (unescape cd)
-      renderChildCDATA n e = renderElement n e  -- ^ this case should not happen in valid HTML
+      -- for and script/style, render text in element as CDATA not PCDATA
+      asCDATA :: XML -> XML
+      asCDATA (CDATA _ cd) = (CDATA False cd)
+      asCDATA o = o -- ^ this case should not happen in valid HTML
 renderAsHTML' n e = renderElement n e
 
 renderElement n (Element name attrs children) =
@@ -127,3 +121,12 @@ renderTag typ n name attrs =
         showName (Just d, s)  = showString d . showChar ':' . showString s
 
         nl = showChar '\n' . showString (replicate n ' ')
+
+-- This list should be extended.
+htmlEscapeChars :: [(Char, String)]
+htmlEscapeChars = [
+	('&',	"amp"	),
+	('\"',	"quot"	),
+	('<',	"lt"	),
+	('>',	"gt"	)
+	]
