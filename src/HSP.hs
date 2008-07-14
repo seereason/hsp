@@ -1,7 +1,7 @@
 module HSP (
         -- module HSP.Monad
-        HSP, HSPT, HSPT', XMLMetaData(..), runHSP, evalHSP, runHSPT, evalHSPT, getEnv,
-        getParam, getIncNumber, doIO, catch, setMetaData, withMetaData, html4Strict, html4StrictFrag,
+        HSP, HSPT, HSPT', runHSP, evalHSP, runHSPT, evalHSPT, getEnv,
+        getParam, getIncNumber, doIO, catch, setMetaData, withMetaData,
         
         -- module HSP.Env
         module HSP.Env,

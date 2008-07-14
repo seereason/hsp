@@ -17,7 +17,7 @@
 
 module HSP.Monad (
         -- * The 'HSP' Monad
-        HSP, HSPT, HSPT', XMLMetaData(..), html4Strict, html4StrictFrag,
+        HSP, HSPT, HSPT',
         runHSP, evalHSP, runHSPT, evalHSPT, getEnv,
         unsafeRunHSP,  -- dangerous!!
         -- * Functions
@@ -40,7 +40,6 @@ import HSP.Exception
 import HSP.Env
 
 import HSP.XML
-import HSP.HTML
 import HSX.XMLGenerator (XMLGenT(..), unXMLGenT)
 
 --------------------------------------------------------------
@@ -52,26 +51,6 @@ import HSX.XMLGenerator (XMLGenT(..), unXMLGenT)
 --type HSP  = XMLGenT HSP'
 
 type HSP =  HSPT IO
-
-data XMLMetaData = XMLMetaData
-  {  doctype :: (Bool, String)
-  ,  contentType :: String
-  ,  preferredRenderer :: XML -> String
-  } 
-
-html4Strict :: Maybe XMLMetaData
-html4Strict = Just $
-    XMLMetaData { doctype = (True, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n")
-                , contentType = "text/html"
-                , preferredRenderer = renderAsHTML
-                }
-
-html4StrictFrag :: Maybe XMLMetaData
-html4StrictFrag = Just $
-    XMLMetaData { doctype = (False, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n")
-                , contentType = "text/html"
-                , preferredRenderer = renderAsHTML
-                }
 
 type HSPT' m = RWST HSPEnv () (Maybe XMLMetaData) m
 type HSPT  m = XMLGenT (HSPT' m)

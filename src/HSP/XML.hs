@@ -14,6 +14,7 @@
 module HSP.XML (
         -- * The 'XML' datatype
         XML(..), 
+        XMLMetaData(..),
         Domain, 
         Name, 
         Attributes, 
@@ -44,6 +45,17 @@ type Children = [XML]
 data XML = Element Name Attributes Children
          | CDATA Bool String
   deriving Show
+
+-- |The XMLMetaData datatype
+-- 
+-- Specify the DOCTYPE, content-type, and preferred render for XML data.
+--
+-- See also: 'HSP.Monad.setMetaData' and 'HSP.Monad.withMetaData'
+data XMLMetaData = XMLMetaData
+  {  doctype :: (Bool, String) -- ^ (show doctype when rendering, DOCTYPE string)
+  ,  contentType :: String
+  ,  preferredRenderer :: XML -> String
+  } 
 
 {- instance Show XML where
  show = renderXML -}

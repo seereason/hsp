@@ -21,6 +21,9 @@ module HSP.HTML (
                  -- * Functions
                   renderAsHTML
                 , htmlEscapeChars
+                 -- * Predefined XMLMetaData
+                , html4Strict
+                , html4StrictFrag
                 ) where
 
 import Data.List
@@ -88,6 +91,7 @@ renderAsHTML' n elm@(Element name@(Nothing,nm) attrs children)
       asCDATA o = o -- ^ this case should not happen in valid HTML
 renderAsHTML' n e = renderElement n e
 
+renderElement :: Int -> XML -> String -> String
 renderElement n (Element name attrs children) =
         let open  = renderTag Open n name attrs 
             cs    = renderChildren n children 
@@ -130,3 +134,19 @@ htmlEscapeChars = [
 	('<',	"lt"	),
 	('>',	"gt"	)
 	]
+
+-- * Pre-defined XMLMetaData
+
+html4Strict :: Maybe XMLMetaData
+html4Strict = Just $
+    XMLMetaData { doctype = (True, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n")
+                , contentType = "text/html"
+                , preferredRenderer = renderAsHTML
+                }
+
+html4StrictFrag :: Maybe XMLMetaData
+html4StrictFrag = Just $
+    XMLMetaData { doctype = (False, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n")
+                , contentType = "text/html"
+                , preferredRenderer = renderAsHTML
+                }
