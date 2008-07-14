@@ -8,12 +8,17 @@
 -- Stability   :  experimental
 -- Portability :  Haskell 98
 --
--- Attempt to render XML as well-formed HTML 4.01:
---  * no short tags are used, e.g., <script></script> instead of <script />
---  * the end tag is forbidden for some elements, for these we:
---    * render only the open tag, e.g., <br>
+-- Attempt to render XHTML as well-formed HTML 4.01:
+--
+--  1. no short tags are used, e.g., \<script\>\<\/script\> instead of \<script \/\>
+--
+--  2. the end tag is forbidden for some elements, for these we:
+--
+--    * render only the open tag, e.g., \<br\>
+--
 --    * throw an error if the tag contains children
---  * optional end tags are always rendered
+--
+--  3. optional end tags are always rendered
 --
 -- Currently no validation is performed.
 -----------------------------------------------------------------------------
@@ -31,8 +36,6 @@ import HSP.XML
 import HSP.XML.PCDATA(escaper)
 
 -- | Pretty-prints HTML values.
--- FIXME: also verify that the domain is correct
--- FIXME: what to do if a namespace is encountered
 --
 -- Error Handling:
 --
@@ -42,7 +45,9 @@ import HSP.XML.PCDATA(escaper)
 -- handle this:
 --
 --  1. drop the bogus children silently
---  2. call 'error' / raise an exception
+--
+--  2. call 'error' \/ raise an exception
+--
 --  3. render the img tag with children -- even though it is invalid
 --
 -- Currently we are taking approach #3, since no other attempts to
@@ -62,6 +67,10 @@ import HSP.XML.PCDATA(escaper)
 --
 -- Another solution would be a compile time error if an empty-only
 -- tag contained children.
+--
+-- FIXME: also verify that the domain is correct
+--
+-- FIXME: what to do if a namespace is encountered
 renderAsHTML :: XML -> String
 renderAsHTML xml = renderAsHTML' 0 xml ""
 
@@ -84,11 +93,11 @@ renderAsHTML' n elm@(Element name@(Nothing,nm) attrs children)
     | nm == "style"     = renderElement n (Element name attrs (map asCDATA children))
     where
       renderTagEmpty [] = renderTag Open n name attrs
-      renderTagEmpty _ = renderElement n elm -- ^ this case should not happen in valid HTML
-      -- for and script/style, render text in element as CDATA not PCDATA
+      renderTagEmpty _ = renderElement n elm -- this case should not happen in valid HTML
+      -- for and script\/style, render text in element as CDATA not PCDATA
       asCDATA :: XML -> XML
       asCDATA (CDATA _ cd) = (CDATA False cd)
-      asCDATA o = o -- ^ this case should not happen in valid HTML
+      asCDATA o = o -- this case should not happen in valid HTML
 renderAsHTML' n e = renderElement n e
 
 renderElement :: Int -> XML -> String -> String
