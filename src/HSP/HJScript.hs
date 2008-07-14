@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -F -pgmFtrhsx #-}
 module HSP.HJScript where
 
 import HSP.Monad

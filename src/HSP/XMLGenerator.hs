@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -F -pgmFtrhsx #-}
 module HSP.XMLGenerator (
         -- * Type classes
 --        IsXML(..), 
