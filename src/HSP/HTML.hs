@@ -149,13 +149,13 @@ htmlEscapeChars = [
 html4Strict :: Maybe XMLMetaData
 html4Strict = Just $
     XMLMetaData { doctype = (True, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n")
-                , contentType = "text/html"
+                , contentType = "text/html;charset=utf-8"
                 , preferredRenderer = renderAsHTML
                 }
 
 html4StrictFrag :: Maybe XMLMetaData
 html4StrictFrag = Just $
     XMLMetaData { doctype = (False, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n")
-                , contentType = "text/html"
+                , contentType = "text/html;charset=utf-8"
                 , preferredRenderer = renderAsHTML
                 }
