@@ -303,7 +303,7 @@ instance GetAttrValue AttrValue where
 
 -- | Strings can be directly taken from values.
 instance GetAttrValue String where
- fromAttrValue (Value s) = s
+ fromAttrValue (Value _ s) = s
  
 -- | Anything that can be read can always fall back on
 -- that as a default behavior.
@@ -318,9 +318,9 @@ instance (Read a) => GetAttrValue a where
 -- | The common way to present list data in attributes is as
 -- a comma separated, unbracketed sequence
 instance (GetAttrValue a) => GetAttrValue [a] where
- fromAttrValue v@(Value str) = case str of
+ fromAttrValue v@(Value needsEscape str) = case str of
         [ v1+, (| ',', vs@:(_+) |)+ ] -> 
-                map (fromAttrValue . Value) (v1:vs)
+                map (fromAttrValue . Value needsEscape) (v1:vs)
         _ -> [fromAttrValue v]
 
 -- All that for these two functions

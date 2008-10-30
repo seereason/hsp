@@ -17,7 +17,7 @@ instance Monad m => EmbedAsChild (HSPT' m) (HJScript ()) where
   asChild script = asChild . snd $ evalHJScript script
 
 instance Monad m => IsAttrValue m (Block t) where
-  toAttrValue block = return . Value $ "javascript:" ++ show block
+  toAttrValue block = return . attrVal $ "javascript:" ++ show block
 
 instance Monad m => IsAttrValue m (HJScript ()) where
   toAttrValue script = toAttrValue . snd $ evalHJScript script

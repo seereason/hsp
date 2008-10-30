@@ -112,7 +112,7 @@ renderTag typ n name attrs =
 
 
         renderAttr :: Attribute -> ShowS
-        renderAttr (MkAttr (nam, (Value val))) = showName nam . showChar '=' . renderAttrVal val
+        renderAttr (MkAttr (nam, (Value needsEscape val))) = showName nam . showChar '=' . renderAttrVal (if needsEscape then (escaper htmlEscapeChars val) else val)
 
         renderAttrVal :: String -> ShowS
         renderAttrVal s = showChar '\"' . showString s . showChar '\"'

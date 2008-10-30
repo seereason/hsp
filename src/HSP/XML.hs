@@ -66,15 +66,15 @@ newtype Attribute = MkAttr (Name, AttrValue)
   deriving Show
 
 -- | Represents an attribue value.
-newtype AttrValue = Value String
+data AttrValue = Value Bool String
 
 -- | Create an attribue value from a string.
 attrVal, pAttrVal :: String -> AttrValue
-attrVal  = Value
-pAttrVal = attrVal . escape
+attrVal  = Value False
+pAttrVal = Value True
 
 instance Show AttrValue where
- show (Value str) = str
+ show (Value _ str) = str
 
 ------------------------------------------------------------------
 -- Rendering
@@ -117,7 +117,7 @@ renderTag typ n name attrs =
 
 
         renderAttr :: Attribute -> ShowS
-        renderAttr (MkAttr (nam, (Value val))) = showName nam . showChar '=' . renderAttrVal val
+        renderAttr (MkAttr (nam, (Value needsEscape val))) = showName nam . showChar '=' . renderAttrVal  (if needsEscape then escape val else val)
 
         renderAttrVal :: String -> ShowS
         renderAttrVal s = showChar '\"' . showString s . showChar '\"'
