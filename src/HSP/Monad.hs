@@ -61,22 +61,22 @@ dummyEnv = undefined
 
 -- | Runs a HSP computation in a particular environment. Since HSP wraps the IO monad,
 -- the result of running it will be an IO computation.
-runHSP :: HSP a -> HSPEnv -> Maybe XMLMetaData -> IO (Maybe XMLMetaData, a)
-runHSP hsp hspEnv xmd = runRWST (unXMLGenT hsp) hspEnv xmd >>= \(a,md,()) -> return (md, a)
+runHSP :: Maybe XMLMetaData -> HSP a -> HSPEnv -> IO (Maybe XMLMetaData, a)
+runHSP xmd hsp hspEnv = runRWST (unXMLGenT hsp) hspEnv xmd >>= \(a,md,()) -> return (md, a)
 
-runHSPT :: (Monad m) => HSPT m a -> HSPEnv -> Maybe XMLMetaData -> m (Maybe XMLMetaData, a)
-runHSPT hsp hspEnv xmd = runRWST (unXMLGenT hsp) hspEnv xmd >>= \(a,md,()) -> return (md, a)
+runHSPT :: (Monad m) => Maybe XMLMetaData -> HSPT m a -> HSPEnv -> m (Maybe XMLMetaData, a)
+runHSPT xmd hsp hspEnv = runRWST (unXMLGenT hsp) hspEnv xmd >>= \(a,md,()) -> return (md, a)
 
-evalHSPT :: MonadIO m => HSPT m a -> Maybe XMLMetaData -> m (Maybe XMLMetaData, a)
-evalHSPT hsp xmd = liftIO mkSimpleEnv >>= \env -> runHSPT hsp env xmd
+evalHSPT :: MonadIO m => Maybe XMLMetaData -> HSPT m a -> m (Maybe XMLMetaData, a)
+evalHSPT xmd hsp = liftIO mkSimpleEnv >>= \env -> runHSPT xmd hsp env 
 
-evalHSP :: HSP a -> Maybe XMLMetaData -> IO (Maybe XMLMetaData, a)
-evalHSP hsp xmd = mkSimpleEnv >>= \env -> runHSP hsp env xmd
+evalHSP :: Maybe XMLMetaData -> HSP a -> IO (Maybe XMLMetaData, a)
+evalHSP xmd hsp = mkSimpleEnv >>= \env -> runHSP xmd hsp env
 
 -- | Runs a HSP computation without an environment. Will work if the page in question does
 -- not touch the environment. Not sure about the usefulness at this stage though...
 unsafeRunHSP :: HSP a -> IO (Maybe XMLMetaData, a)
-unsafeRunHSP hspf = runHSP hspf dummyEnv Nothing
+unsafeRunHSP hspf = runHSP Nothing hspf dummyEnv
 
 -- | Execute an IO computation within the HSP monad.
 doIO :: IO a -> HSP a
