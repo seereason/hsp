@@ -1,8 +1,8 @@
 Name:                   hsp
-Version:                0.4.4
+Version:                0.4.5
 License:                BSD3
 License-File:           LICENSE
-Author:                 Niklas Broberg, Joel Björnson
+Author:                 Niklas Broberg, Joel Bjornson
 Maintainer:             Niklas Broberg <nibro@cs.chalmers.se>
 
 Stability:              Experimental
@@ -22,6 +22,7 @@ Homepage:               http://code.google.com/p/hsp
 
 Build-Depends:          base >3 && < 4, mtl, harp, hsx>=0.4.4, HJScript>=0.4.4
 Build-Type:             Simple
+Cabal-Version:          >= 1.2.3
 Tested-With:            GHC==6.8.3
 
 Hs-Source-Dirs:         src
