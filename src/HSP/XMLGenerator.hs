@@ -32,6 +32,7 @@ instance Monad m => HSX.XMLGen (HSPT' m) where
  newtype HSX.Attribute (HSPT' m) = HSPAttr Attribute 
  newtype HSX.Child     (HSPT' m) = HSPChild XML
  xmlToChild = HSPChild
+ pcdataToChild = HSX.xmlToChild . pcdata
  genElement = element
  genEElement = eElement
 
@@ -106,8 +107,8 @@ instance Monad m => IsXMLs m XML where
 --instance Monad m => IsXMLs m String where
 -- toXMLs s = return [pcdata s]
 
-instance Monad m => EmbedAsChild (HSPT' m) String where
- asChild = asChild . pcdata
+-- instance Monad m => EmbedAsChild (HSPT' m) String where
+--  asChild = asChild . pcdata
 
 instance Monad m => EmbedAsChild (HSPT' m) Char where
  asChild = asChild . (:[])
