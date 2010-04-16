@@ -1,6 +1,4 @@
-{-# OPTIONS_GHC -fallow-overlapping-instances #-}
-{-# OPTIONS_GHC -fallow-undecidable-instances #-}
-{-# OPTIONS_GHC -fglasgow-exts #-}
+{-# LANGUAGE OverlappingInstances, UndecidableInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  HSP.Data
