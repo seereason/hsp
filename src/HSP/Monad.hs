@@ -92,7 +92,7 @@ withMetaData xmd h = do
 ----------------------------------------------------------------
 -- Environment stuff
 
--- | Supplíes the HSP environment.
+-- | Supplies the HSP environment.
 getEnv :: HSP HSPEnv
 getEnv = lift ask
 
