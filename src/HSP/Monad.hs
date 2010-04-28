@@ -32,7 +32,11 @@ import Control.Monad.Trans (MonadIO(..))
 import Prelude hiding (catch)
 
 -- Exceptions
+#ifdef BASE4
+import Control.OldException (catchDyn)
+#else
 import Control.Exception (catchDyn)
+#endif
 import HSP.Exception
 
 import HSP.Env

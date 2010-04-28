@@ -18,8 +18,11 @@ module HSP.Exception (
 	) where
 
 import Data.Typeable
+#ifdef BASE4
+import Control.OldException (throwDyn)
+#else
 import Control.Exception (throwDyn)
-
+#endif
 data Exception
 	=  ParameterLookupFailed String	-- ^ User tried to do an irrefutable parameter lookup
 					-- that failed.
