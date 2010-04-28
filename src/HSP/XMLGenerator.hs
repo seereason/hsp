@@ -21,6 +21,8 @@ import qualified HSX.XMLGenerator as HSX (XMLGen(..))
 
 --import Control.Monad (liftM)
 import Control.Monad.Trans (lift)
+import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 
 --import Data.List (intersperse)
 
@@ -114,6 +116,12 @@ instance Monad m => IsXMLs m XML where
 instance Monad m => EmbedAsChild (HSPT' m) Char where
  asChild = asChild . (:[])
 
+instance (Monad m, Functor m) => (EmbedAsChild (HSPT' m) TL.Text) where
+    asChild = asChild . TL.unpack
+
+instance (Monad m, Functor m) => (EmbedAsChild (HSPT' m) T.Text) where
+    asChild = asChild . T.unpack
+
 {-
 -- | If something can be represented as a list of XML, then a list of 
 -- that something can also be represented as a list of XML.
@@ -180,6 +188,12 @@ instance Monad m => IsAttrValue m AttrValue where
 -- | Strings can be directly represented as values.
 instance Monad m => IsAttrValue m String where
  toAttrValue = return . pAttrVal
+
+instance (Monad m) => IsAttrValue m T.Text where
+    toAttrValue = toAttrValue . T.unpack
+
+instance (Monad m) => IsAttrValue m TL.Text where
+    toAttrValue = toAttrValue . TL.unpack
 
 instance Monad m => IsAttrValue m Int where
  toAttrValue = toAttrValue . show
