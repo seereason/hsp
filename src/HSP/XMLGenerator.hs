@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, OverlappingInstances, PatternGuards, TypeFamilies, TypeSynonymInstances, UndecidableInstances #-}
 {-# OPTIONS_GHC -F -pgmFtrhsx #-}
 module HSP.XMLGenerator (
         -- * Type classes

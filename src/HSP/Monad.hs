@@ -1,4 +1,4 @@
-{-# LANGUAGE OverlappingInstances, UndecidableInstances #-}
+{-# LANGUAGE CPP, OverlappingInstances, UndecidableInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  HSP.Data
