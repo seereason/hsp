@@ -1,9 +1,9 @@
 Name:                   hsp
-Version:                0.5.1
+Version:                0.5.2
 License:                BSD3
 License-File:           LICENSE
 Author:                 Niklas Broberg, Joel Bjornson
-Maintainer:             Niklas Broberg <nibro@cs.chalmers.se>
+Maintainer:             Niklas Broberg <niklas.broberg@chalmers.se>
 
 Stability:              Experimental
 Category:               Web, Language
