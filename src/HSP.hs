@@ -21,8 +21,7 @@ module HSP (
 
     ) where
 
-import Prelude hiding (catch)
-
+import Prelude ()
 import HSP.Monad
 import HSP.Env hiding (mkSimpleEnv)
 import HSP.XML hiding (Name)

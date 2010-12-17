@@ -25,9 +25,8 @@ module HSP.Monad (
 
 -- Monad imports
 -- import Control.Monad.Reader (ReaderT(..), ask, lift)
-import Control.Monad.RWS (RWST(..), ask, lift, put)
-import Control.Monad.State
-import Control.Monad.Trans (MonadIO(..))
+import Control.Monad.RWS (RWST(..), ask, put)
+import Control.Monad.Trans (MonadIO(..), lift)
 
 import Prelude hiding (catch)
 

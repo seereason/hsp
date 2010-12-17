@@ -108,6 +108,8 @@ renderElement n (Element name attrs children) =
          in open . cs . close
   where renderChildren :: Int -> Children -> ShowS
         renderChildren n' cs = foldl (.) id $ map (renderAsHTML' (n'+2)) cs
+renderElement _ _ = error "internal error: renderElement only suports the Element constructor."
+
 
 renderTag :: TagType -> Int -> Name -> Attributes -> ShowS 
 renderTag typ n name attrs = 

@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses, FlexibleContexts #-}
 {-# OPTIONS_GHC -F -pgmFtrhsx #-}
 module HSP.HJScript where
 
