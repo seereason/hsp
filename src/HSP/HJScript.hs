@@ -14,9 +14,6 @@ instance Monad m => EmbedAsChild (HSPT' m) (Block t) where
       <% show b %>
     </script>
 
-instance Monad m => EmbedAsChild (HSPT' m) (HJScript ()) where
-  asChild script = asChild . snd $ evalHJScript script
-
 instance Monad m => IsAttrValue m (Block t) where
   toAttrValue block = return . attrVal $ "javascript:" ++ show block
 
@@ -25,6 +22,9 @@ instance Monad m => IsAttrValue m (HJScript ()) where
 
 instance Monad m => IsAttrValue m (HJScript (Exp t)) where
   toAttrValue script = toAttrValue $ evaluateHJScript script
+
+scriptAsChild :: (EmbedAsChild m String) => HJScript () -> XMLGenT m [HSX.Child m]
+scriptAsChild script = asChild $ show $ snd $ evalHJScript script
 
 newGlobalVar :: HSP (Var t, Block ())
 newGlobalVar = do
