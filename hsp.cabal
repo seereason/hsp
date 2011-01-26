@@ -1,5 +1,5 @@
 Name:                   hsp
-Version:                0.6.0
+Version:                0.6.1
 License:                BSD3
 License-File:           LICENSE
 Author:                 Niklas Broberg, Joel Bjornson
@@ -18,7 +18,7 @@ Description:            Haskell Server Pages (HSP) is an extension of vanilla Ha
                         * A cgi-handler utility (as a separate package, hsp-cgi)
                         .
                         For details on usage, please see the website, and the author's thesis.
-Homepage:               http://code.google.com/p/hsp
+Homepage:               http://code.haskell.org/HSP/hsp
 Build-Type:             Simple
 Cabal-Version:          >= 1.2.3
 Tested-With:            GHC==6.8.3, GHC==6.10, GHC==7.0.2
