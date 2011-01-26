@@ -24,8 +24,8 @@ instance Monad m => IsAttrValue m (HJScript ()) where
 instance Monad m => IsAttrValue m (HJScript (Exp t)) where
   toAttrValue script = toAttrValue $ evaluateHJScript script
 
-scriptAsChild :: (EmbedAsChild m String) => HJScript () -> XMLGenT m [HSX.Child m]
-scriptAsChild script = asChild $ show $ snd $ evalHJScript script
+scriptAsChild :: (EmbedAsChild m (Block ())) => HJScript () -> XMLGenT m [HSX.Child m]
+scriptAsChild script = asChild $ snd $ evalHJScript script
 
 newGlobalVar :: HSP (Var t, Block ())
 newGlobalVar = do
