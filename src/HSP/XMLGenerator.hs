@@ -31,9 +31,15 @@ import qualified Data.Text.Lazy as TL
 
 -- | We can use literal XML syntax to generate values of type XML in the HSP monad.
 instance Monad m => HSX.XMLGen (HSPT' m) where
+#if __GLASGOW_HASKELL__ < 702
  type HSX.XML (HSPT' m) = XML
- newtype HSX.Attribute (HSPT' m) = HSPAttr Attribute 
+ newtype HSX.Attribute (HSPT' m) = HSPAttr Attribute
  newtype HSX.Child     (HSPT' m) = HSPChild XML
+#else
+ type XML (HSPT' m) = XML
+ newtype Attribute (HSPT' m) = HSPAttr Attribute
+ newtype Child     (HSPT' m) = HSPChild XML
+#endif
  xmlToChild = HSPChild
  pcdataToChild = HSX.xmlToChild . pcdata
  genElement = element
