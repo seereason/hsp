@@ -7,7 +7,7 @@ import HSP.XML
 import HSP.XMLGenerator
 import HJScript -- hiding (( := )(..), genElement, genEElement, asAttr, asChild)
 
-import qualified HSX.XMLGenerator as HSX
+import {- qualified -} HSX.XMLGenerator -- as HSX
 
 instance Monad m => EmbedAsChild (HSPT' m) (Block t) where
   asChild b = asChild $
@@ -24,7 +24,7 @@ instance Monad m => IsAttrValue m (HJScript ()) where
 instance Monad m => IsAttrValue m (HJScript (Exp t)) where
   toAttrValue script = toAttrValue $ evaluateHJScript script
 
-scriptAsChild :: (EmbedAsChild m (Block ())) => HJScript () -> XMLGenT m [HSX.Child m]
+scriptAsChild :: (EmbedAsChild m (Block ())) => HJScript () -> XMLGenT m [ChildType m]
 scriptAsChild script = asChild $ snd $ evalHJScript script
 
 newGlobalVar :: HSP (Var t, Block ())
@@ -76,21 +76,21 @@ ref xml = do
 -- Settting properties
 -------------------------------------------------
 
-setId :: (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String v)) 
-        => xml -> v -> HSX.XMLGenT m (HSX.XML m)
+setId :: (SetAttr m xml, EmbedAsAttr m (Attr String v)) 
+        => xml -> v -> XMLGenT m (XMLType m)
 setId e v = e `set` ("id" := v)
 
 -- Generel method for adding 'onEvent' attributes to XML elements.
-onEvent :: (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String (HJScript t)))
-        => Event -> xml -> HJScript t -> HSX.XMLGenT m (HSX.XML m)
+onEvent :: (SetAttr m xml, EmbedAsAttr m (Attr String (HJScript t)))
+        => Event -> xml -> HJScript t -> XMLGenT m (XMLType m)
 onEvent event xml script = xml `set` (showEvent event := script)
 
 onAbort, onBlur, onChange, onClick, onDblClick, onError,
   onFocus, onKeyDown, onKeyPress, onKeyUp, onLoad, onMouseDown,
   onMouseMove, onMouseOut, onMouseOver, onMouseUp, onReset,
   onResize, onSelect, onSubmit, onUnload :: 
-    (HSX.SetAttr m xml, HSX.EmbedAsAttr m (Attr String (HJScript t)))
-        => xml -> HJScript t -> HSX.XMLGenT m (HSX.XML m)
+    (SetAttr m xml, EmbedAsAttr m (Attr String (HJScript t)))
+        => xml -> HJScript t -> XMLGenT m (XMLType m)
 
 onAbort     = onEvent OnAbort
 onBlur      = onEvent OnBlur

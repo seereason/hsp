@@ -9,15 +9,15 @@ module HSP.XMLGenerator (
         
         extract,
         
-        module HSX.XMLGenerator, HSX.genElement, HSX.genEElement
+        module HSX.XMLGenerator, genElement, genEElement
 
     ) where
 
 import HSP.Monad
 import HSP.XML hiding (Name)
 
-import HSX.XMLGenerator hiding (XMLGen(..))
-import qualified HSX.XMLGenerator as HSX (XMLGen(..))
+import HSX.XMLGenerator --hiding (XMLGen(..))
+--import qualified HSX.XMLGenerator as HSX (XMLGen(..))
 
 --import Control.Monad (liftM)
 import Control.Monad.Trans (lift)
@@ -30,18 +30,12 @@ import qualified Data.Text.Lazy as TL
 -- Instantiating XMLGenerator for the HSP monad.
 
 -- | We can use literal XML syntax to generate values of type XML in the HSP monad.
-instance Monad m => HSX.XMLGen (HSPT' m) where
-#if __GLASGOW_HASKELL__ < 702
- type HSX.XML (HSPT' m) = XML
- newtype HSX.Attribute (HSPT' m) = HSPAttr Attribute
- newtype HSX.Child     (HSPT' m) = HSPChild XML
-#else
- type XML (HSPT' m) = XML
- newtype Attribute (HSPT' m) = HSPAttr Attribute
- newtype Child     (HSPT' m) = HSPChild XML
-#endif
+instance Monad m => XMLGen (HSPT' m) where
+ type XMLType (HSPT' m) = XML
+ newtype AttributeType (HSPT' m) = HSPAttr Attribute
+ newtype ChildType     (HSPT' m) = HSPChild XML
  xmlToChild = HSPChild
- pcdataToChild = HSX.xmlToChild . pcdata
+ pcdataToChild = xmlToChild . pcdata
  genElement = element
  genEElement = eElement
 
@@ -178,7 +172,7 @@ instance Monad m => IsXMLs m (HSX.Child (HSPT' m)) where
 -- This instance should already be there, probably doesn't work due
 -- to type families not being fully supported yet.
 instance Monad m => EmbedAsChild (HSPT' m) XML where
- asChild = return . return . HSX.xmlToChild
+ asChild = return . return . xmlToChild
 ---------------
 -- IsAttrValue
 
@@ -383,9 +377,9 @@ element n attrs xmls = do
                            (CDATA e1 s1, CDATA e2 s2) | e1 == e2 -> flP (CDATA e1 (s1++s2) : xs) bs
                            _ -> flP (y:xs) (x:bs)
 
-stripAttr :: HSX.Attribute (HSPT' m) -> Attribute
+stripAttr :: AttributeType (HSPT' m) -> Attribute
 stripAttr  (HSPAttr a) = a
-stripChild :: HSX.Child (HSPT' m) -> XML
+stripChild :: ChildType (HSPT' m) -> XML
 stripChild (HSPChild c) = c
 
 eAttrs :: Attributes
