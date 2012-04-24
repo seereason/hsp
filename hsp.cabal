@@ -1,5 +1,5 @@
 Name:                   hsp
-Version:                0.7.0
+Version:                0.7.1
 License:                BSD3
 License-File:           LICENSE
 Author:                 Niklas Broberg, Joel Bjornson
@@ -30,7 +30,7 @@ source-repository head
 Flag base4
 
 Library
-  Build-Depends:        base >3 && < 5, mtl, harp, hsx>=0.10.0 && < 0.11, HJScript>=0.6.0, text
+  Build-Depends:        base >3 && < 5, mtl, harp, hsx>=0.10.2 && < 0.11, HJScript>=0.6.1, text
   if flag(base4)
     Build-depends:      base >= 4 && < 5
     cpp-options:        -DBASE4
