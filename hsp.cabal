@@ -30,15 +30,20 @@ source-repository head
 Flag base4
 
 Library
-  Build-Depends:        base >3 && < 5, mtl, harp, hsx>=0.10.2 && < 0.11, HJScript>=0.6.1, text
+  Build-Depends:        base >3 && < 5,
+                        mtl,
+                        text
   if flag(base4)
     Build-depends:      base >= 4 && < 5
     cpp-options:        -DBASE4
   else
     Build-depends:      base >= 3 && < 4
   Hs-Source-Dirs:       src
-  Exposed-Modules:      HSP.XML, HSP.XML.PCDATA, HSP.HTML, HSP.Env, HSP.Env.Request, HSP.Env.NumberGen, HSP.HJScript, HSP
-  Other-Modules:        HSP.Exception, HSP.Monad, HSP.XMLGenerator
+  Exposed-Modules:      HSP.XMLGenerator
+                        HSP.XML
+                        HSP.XML.PCDATA
+                        HSP.HTML4
+                        HSP.Monad
 
   GHC-Options:          -Wall -fno-warn-orphans
   Extensions:           MultiParamTypeClasses,

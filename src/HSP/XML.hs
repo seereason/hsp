@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  HSP.XML
--- Copyright   :  (c) Niklas Broberg 2008
+-- Copyright   :  (c) Niklas Broberg 2008-2012
 -- License     :  BSD-style (see the file LICENSE.txt)
--- 
--- Maintainer  :  Niklas Broberg, nibro@cs.chalmers.se
+--
+-- Maintainer  :  Niklas Broberg, niklas.broberg@gmail.com
 -- Stability   :  experimental
 -- Portability :  Haskell 98
 --
@@ -13,11 +13,11 @@
 -----------------------------------------------------------------------------
 module HSP.XML (
         -- * The 'XML' datatype
-        XML(..), 
+        XML(..),
         XMLMetaData(..),
-        Domain, 
-        Name, 
-        Attributes, 
+        Domain,
+        Name,
+        Attributes,
         Children,
         pcdata,
         cdata,
@@ -30,32 +30,61 @@ module HSP.XML (
         isElement, isCDATA
         ) where
 
-import Data.List (intersperse)
+import Data.List                        (intersperse)
+import Data.Monoid                      ((<>), mconcat)
+import Data.String                      (fromString)
+import Data.Text.Lazy.Builder           (Builder, fromLazyText, singleton, toLazyText)
+import Data.Text.Lazy                   (Text)
+import qualified Data.Text.Lazy         as Text
+import HSP.XML.PCDATA                   (escape)
 
-import HSP.XML.PCDATA (escape)
 ---------------------------------------------------------------
--- Data types
+-- Domain/Name
 
-type Domain = Maybe String
-type Name = (Domain, String)
-type Attributes = [Attribute]
-type Children = [XML]
+type Domain = Maybe Text
+type Name   = (Domain, Text)
 
--- | The XML datatype representation. Is either an Element or CDATA.
-data XML = Element Name Attributes Children
-         | CDATA Bool String
+---------------------------------------------------------------
+-- Attributes
+newtype Attribute = MkAttr (Name, AttrValue)
   deriving Show
 
+-- | Represents an attribue value.
+data AttrValue = Value Bool Text
+
+-- | Create an attribue value from a string.
+attrVal, pAttrVal :: Text -> AttrValue
+attrVal  = Value False
+pAttrVal = Value True
+
+instance Show AttrValue where
+ show (Value _ txt) = Text.unpack txt
+
+type Attributes = [Attribute]
+
+---------------------------------------------------------------
+-- XML
+-- | The XML datatype representation. Is either an Element or CDATA.
+data XML
+    = Element Name Attributes Children
+    | CDATA Bool Text
+      deriving Show
+
+type Children = [XML]
+
+---------------------------------------------------------------
+-- XMLMetaData
+
 -- |The XMLMetaData datatype
--- 
+--
 -- Specify the DOCTYPE, content-type, and preferred render for XML data.
 --
 -- See also: 'HSP.Monad.setMetaData' and 'HSP.Monad.withMetaData'
 data XMLMetaData = XMLMetaData
-  {  doctype :: (Bool, String) -- ^ (show doctype when rendering, DOCTYPE string)
-  ,  contentType :: String
-  ,  preferredRenderer :: XML -> String
-  } 
+  {  doctype           :: (Bool, Text) -- ^ (show doctype when rendering, DOCTYPE string)
+  ,  contentType       :: Text
+  ,  preferredRenderer :: XML -> Builder
+  }
 
 {- instance Show XML where
  show = renderXML -}
@@ -67,75 +96,56 @@ isElement _ = False
 isCDATA = not . isElement
 
 -- | Embeds a string as a CDATA XML value.
-cdata , pcdata :: String -> XML
+cdata , pcdata :: Text -> XML
 cdata  = CDATA False
 pcdata = CDATA True
-
----------------------------------------------------------------
--- Attributes
-
-newtype Attribute = MkAttr (Name, AttrValue)
-  deriving Show
-
--- | Represents an attribue value.
-data AttrValue = Value Bool String
-
--- | Create an attribue value from a string.
-attrVal, pAttrVal :: String -> AttrValue
-attrVal  = Value False
-pAttrVal = Value True
-
-instance Show AttrValue where
- show (Value _ str) = str
 
 ------------------------------------------------------------------
 -- Rendering
 
+data TagType = Open | Close | Single
+
+renderTag :: TagType -> Int -> Name -> Attributes -> Builder
+renderTag typ n name attrs =
+        let (start,end) = case typ of
+                           Open   -> (singleton  '<',  singleton  '>')
+                           Close  -> (fromString "</", singleton  '>')
+                           Single -> (singleton  '<',  fromString "/>")
+            nam = showName name
+            as  = renderAttrs attrs
+         in mconcat [start, nam, as, end]
+
+  where renderAttrs :: Attributes -> Builder
+        renderAttrs [] = nl
+        renderAttrs attrs' = singleton ' ' <> mconcat  ats <>  nl
+          where ats = intersperse (singleton ' ') $ fmap renderAttr attrs'
+
+        renderAttr :: Attribute -> Builder
+        renderAttr (MkAttr (nam, (Value needsEscape val))) =
+            showName nam <> singleton '=' <> renderAttrVal  (if needsEscape then escape val else fromLazyText val)
+
+        renderAttrVal :: Builder -> Builder
+        renderAttrVal txt = singleton '\"' <> txt <> singleton '\"'
+
+        showName (Nothing, s) = fromLazyText s
+        showName (Just d, s)  = fromLazyText d <> singleton ':' <> fromLazyText s
+
+        nl = singleton '\n' <> fromString (replicate n ' ')
+
+renderXML' :: Int -> XML -> Builder
+renderXML' _ (CDATA needsEscape cd) = if needsEscape then escape cd else fromLazyText cd
+renderXML' n (Element name attrs []) = renderTag Single n name attrs
+renderXML' n (Element name attrs children) =
+        let open  = renderTag Open n name attrs
+            cs    = renderChildren n children
+            close = renderTag Close n name []
+         in open <> cs <> close
+
+  where renderChildren :: Int -> Children -> Builder
+        renderChildren n' cs = mconcat $ map (renderXML' (n'+2)) cs
+
 -- TODO: indents are incorrectly calculated
 
 -- | Pretty-prints XML values.
-renderXML :: XML -> String
-renderXML xml = renderXML' 0 xml ""
-
-data TagType = Open | Close | Single
-
-renderXML' :: Int -> XML -> ShowS
-renderXML' _ (CDATA needsEscape cd) = showString (if needsEscape then escape cd else cd)
-renderXML' n (Element name attrs []) = renderTag Single n name attrs
-renderXML' n (Element name attrs children) =
-        let open  = renderTag Open n name attrs 
-            cs    = renderChildren n children 
-            close = renderTag Close n name []
-         in open . cs . close
-
-  where renderChildren :: Int -> Children -> ShowS
-        renderChildren n' cs = foldl (.) id $ map (renderXML' (n'+2)) cs
-
-                
-renderTag :: TagType -> Int -> Name -> Attributes -> ShowS 
-renderTag typ n name attrs = 
-        let (start,end) = case typ of
-                           Open   -> (showChar '<', showChar '>')
-                           Close  -> (showString "</", showChar '>')
-                           Single -> (showChar '<', showString "/>")
-            nam = showName name
-            as  = renderAttrs attrs
-         in start . nam . as . end
-
-  where renderAttrs :: Attributes -> ShowS
-        renderAttrs [] = nl
-        renderAttrs attrs' = showChar ' ' . ats . nl
-          where ats = foldl (.) id $ intersperse (showChar ' ') $ fmap renderAttr attrs'
-
-
-        renderAttr :: Attribute -> ShowS
-        renderAttr (MkAttr (nam, (Value needsEscape val))) = showName nam . showChar '=' . renderAttrVal  (if needsEscape then escape val else val)
-
-        renderAttrVal :: String -> ShowS
-        renderAttrVal s = showChar '\"' . showString s . showChar '\"'
-
-        showName (Nothing, s) = showString s
-        showName (Just d, s)  = showString d . showChar ':' . showString s
-
-        nl = showChar '\n' . showString (replicate n ' ')
-
+renderXML :: XML -> Text
+renderXML xml = toLazyText $ renderXML' 0 xml

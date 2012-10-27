@@ -1,120 +1,83 @@
-{-# LANGUAGE CPP, OverlappingInstances, UndecidableInstances #-}
------------------------------------------------------------------------------
--- |
--- Module      :  HSP.Data
--- Copyright   :  (c) Niklas Broberg 2008
--- License     :  BSD-style (see the file LICENSE.txt)
--- 
--- Maintainer  :  Niklas Broberg, nibro@cs.chalmers.se
--- Stability   :  experimental
--- Portability :  requires undecidable and overlapping instances, and forall in datatypes
---
--- Datatypes and type classes comprising the basic model behind
--- the scenes of Haskell Server Pages tags.
------------------------------------------------------------------------------
+{-# LANGUAGE FlexibleInstances, GeneralizedNewtypeDeriving, OverlappingInstances, MultiParamTypeClasses, TypeFamilies #-}
+module HSP.Monad where
 
-module HSP.Monad (
-        -- * The 'HSP' Monad
-        HSP, HSPT, HSPT',
-        runHSP, evalHSP, runHSPT, evalHSPT, getEnv,
-        unsafeRunHSP,  -- dangerous!!
-        -- * Functions
-        getParam, getIncNumber, doIO, catch,
-        setMetaData, withMetaData
-        ) where
+import Control.Applicative  (Applicative, Alternative, (<$>))
+import Control.Monad.Cont   (MonadCont)
+import Control.Monad.Error  (MonadError)
+import Control.Monad.Fix    (MonadFix)
+import Control.Monad.Reader (MonadReader)
+import Control.Monad.Writer (MonadWriter)
+import Control.Monad.State  (MonadState)
+import Control.Monad.Trans  (MonadIO, MonadTrans(lift))
+import Data.String          (fromString)
+import Data.Text.Lazy       (Text)
+import qualified Data.Text.Lazy as Text
+import HSP.XMLGenerator     (AppendChild(..), Attr(..), EmbedAsAttr(..), EmbedAsChild(..), IsName(toName), SetAttr(..), XMLGen(..), XMLGenerator)
+import HSP.XML              (Attribute(..), XML(..), pAttrVal, pcdata)
 
--- Monad imports
--- import Control.Monad.Reader (ReaderT(..), ask, lift)
-import Control.Monad.RWS (RWST(..), ask, put)
-import Control.Monad.Trans (MonadIO(..), lift)
+newtype HSPT xml m a = HSPT { unHSPT :: m a }
+    deriving (Functor, Applicative, Alternative, Monad, MonadIO, MonadReader r, MonadWriter w, MonadState s, MonadCont, MonadError e, MonadFix)
 
-import Prelude hiding (catch)
+instance MonadTrans (HSPT xml) where
+    lift = HSPT
 
--- Exceptions
-#ifdef BASE4
-import Control.OldException (catchDyn)
-#else
-import Control.Exception (catchDyn)
-#endif
-import HSP.Exception
+instance (Functor m, Monad m) => (XMLGen (HSPT XML m)) where
+    type    XMLType       (HSPT XML m) = XML
+    newtype ChildType     (HSPT XML m) = HSPChild { unHSPChild :: XML }
+    newtype AttributeType (HSPT XML m) = HSPAttr  { unHSPAttr  :: Attribute }
+    genElement n attrs childr          =
+        do as <- (map unHSPAttr  . concat) <$> sequence attrs
+           cs <- (map unHSPChild . concat) <$> sequence childr
+           return (Element n as cs)
+    xmlToChild                         = HSPChild
+    pcdataToChild str                  = HSPChild (pcdata str)
 
-import HSP.Env
+instance (Functor m, Monad m) => SetAttr (HSPT XML m) XML where
+    setAll xml hats =
+        do attrs <- hats
+           case xml of
+             CDATA _ _       -> return xml
+             Element n as cs -> return $ Element n (foldr (:) as (map unHSPAttr attrs)) cs
 
-import HSP.XML
-import HSX.XMLGenerator (XMLGenT(..), unXMLGenT)
+instance (Functor m, Monad m) => AppendChild (HSPT XML m) XML where
+ appAll xml children =
+        do chs <- children
+           case xml of
+             CDATA _ _       -> return xml
+             Element n as cs -> return $ Element n as (cs ++ (map unHSPChild chs))
 
---------------------------------------------------------------
--- The HSP Monad
+instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) XML where
+    asChild = return . (:[]) . HSPChild
 
--- | The HSP monad is a reader wrapper around
--- the IO monad, but extended with an XMLGenerator wrapper.
---type HSP' = ReaderT HSPEnv IO
---type HSP  = XMLGenT HSP'
+instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) [XML] where
+    asChild = return . map HSPChild
 
-type HSP =  HSPT IO
+instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) String where
+    asChild = return . (:[]) . HSPChild . pcdata . Text.pack
 
-type HSPT' m = RWST HSPEnv () (Maybe XMLMetaData) m
-type HSPT  m = XMLGenT (HSPT' m)
+instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) Text where
+    asChild = return . (:[]) . HSPChild . pcdata
 
--- do NOT export this in the final version
-dummyEnv :: HSPEnv
-dummyEnv = undefined
+instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) Char where
+    asChild = return . (:[]) . pcdataToChild . Text.singleton
 
--- | Runs a HSP computation in a particular environment. Since HSP wraps the IO monad,
--- the result of running it will be an IO computation.
-runHSP :: Maybe XMLMetaData -> HSP a -> HSPEnv -> IO (Maybe XMLMetaData, a)
-runHSP xmd hsp hspEnv = runRWST (unXMLGenT hsp) hspEnv xmd >>= \(a,md,()) -> return (md, a)
+instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) () where
+    asChild = return . const []
 
-runHSPT :: (Monad m) => Maybe XMLMetaData -> HSPT m a -> HSPEnv -> m (Maybe XMLMetaData, a)
-runHSPT xmd hsp hspEnv = runRWST (unXMLGenT hsp) hspEnv xmd >>= \(a,md,()) -> return (md, a)
+instance (Monad m, Functor m) => EmbedAsAttr (HSPT XML m) (Attr Text Char) where
+    asAttr (n := c)  = asAttr (n := Text.singleton c)
 
-evalHSPT :: MonadIO m => Maybe XMLMetaData -> HSPT m a -> m (Maybe XMLMetaData, a)
-evalHSPT xmd hsp = liftIO mkSimpleEnv >>= \env -> runHSPT xmd hsp env 
+instance (Monad m, Functor m) => EmbedAsAttr (HSPT XML m) Attribute where
+    asAttr = return . (:[]) . HSPAttr
 
-evalHSP :: Maybe XMLMetaData -> HSP a -> IO (Maybe XMLMetaData, a)
-evalHSP xmd hsp = mkSimpleEnv >>= \env -> runHSP xmd hsp env
+instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Text Bool) where
+    asAttr (n := True)  = asAttr $ MkAttr (toName n, pAttrVal $ fromString "true")
+    asAttr (n := False) = asAttr $ MkAttr (toName n, pAttrVal $ fromString "false")
 
--- | Runs a HSP computation without an environment. Will work if the page in question does
--- not touch the environment. Not sure about the usefulness at this stage though...
-unsafeRunHSP :: HSP a -> IO (Maybe XMLMetaData, a)
-unsafeRunHSP hspf = runHSP Nothing hspf dummyEnv
+instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Text Int) where
+    asAttr (n := i)  = asAttr $ MkAttr (toName n, pAttrVal $ fromString (show i))
 
--- | Execute an IO computation within the HSP monad.
-doIO :: IO a -> HSP a
-doIO = liftIO
+instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Text Text) where
+    asAttr (n := txt)  = asAttr $ MkAttr (toName n, pAttrVal txt)
 
-setMetaData :: (Monad m) => (Maybe XMLMetaData) -> HSPT m ()
-setMetaData xmd = lift (put xmd)
-
-withMetaData :: (Monad m) => Maybe XMLMetaData -> HSPT m a -> HSPT m a
-withMetaData xmd h = do
-  x <- h
-  setMetaData xmd
-  return x
-
-----------------------------------------------------------------
--- Environment stuff
-
--- | Supplies the HSP environment.
-getEnv :: HSP HSPEnv
-getEnv = lift ask
-
-getRequest :: HSP Request
-getRequest = fmap getReq getEnv
-
-getParam :: String -> HSP (Maybe String)
-getParam s = getRequest >>= \req -> return $ getParameter req s
-
-getIncNumber :: HSP Int
-getIncNumber = getEnv >>= doIO . incNumber . getNG
-
-
-
------------------------------------------------------------------------
--- Exception handling
-
--- | Catch a user-caused exception.
-catch :: HSP a -> (Exception -> HSP a) -> HSP a
-catch (XMLGenT (RWST f)) handler = XMLGenT $ RWST $ \e s ->
-        f e s `catchDyn` (\ex -> (let (XMLGenT (RWST g)) = handler ex
-                                 in g e s))
+instance (Functor m, Monad m) => XMLGenerator (HSPT XML m)
