@@ -25,7 +25,7 @@ Tested-With:            GHC==6.8.3, GHC==6.10, GHC==7.0.2
 
 source-repository head
     type:     darcs
-    location: http://patch-tag.com/r/nibro/hsp
+    location: http://hub.darcs.net/nibro/hsp
 
 Flag base4
 
