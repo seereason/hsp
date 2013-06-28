@@ -27,7 +27,8 @@ module HSP.XML (
         attrVal, pAttrVal,
         -- * Functions
         renderXML,
-        isElement, isCDATA
+        isElement, isCDATA,
+        fromStringLit
         ) where
 
 import Data.List                        (intersperse)
@@ -51,6 +52,9 @@ newtype Attribute = MkAttr (Name, AttrValue)
 
 -- | Represents an attribue value.
 data AttrValue = Value Bool Text
+
+fromStringLit :: String -> Text
+fromStringLit = Text.pack
 
 -- | Create an attribue value from a string.
 attrVal, pAttrVal :: Text -> AttrValue
