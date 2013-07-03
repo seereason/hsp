@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  HSP.XML
--- Copyright   :  (c) Niklas Broberg 2008-2012
+-- Copyright   :  (c) Niklas Broberg 2008-2013
 -- License     :  BSD-style (see the file LICENSE.txt)
 --
 -- Maintainer  :  Niklas Broberg, niklas.broberg@gmail.com
@@ -15,8 +15,8 @@ module HSP.XML (
         -- * The 'XML' datatype
         XML(..),
         XMLMetaData(..),
-        Domain,
-        Name,
+        Namespace,
+        NSName,
         Attributes,
         Children,
         pcdata,
@@ -40,21 +40,27 @@ import qualified Data.Text.Lazy         as Text
 import HSP.XML.PCDATA                   (escape)
 
 ---------------------------------------------------------------
--- Domain/Name
+-- fromStringLit
 
-type Domain = Maybe Text
-type Name   = (Domain, Text)
+fromStringLit :: String -> Text
+fromStringLit = Text.pack
+
+---------------------------------------------------------------
+-- Namespace/NSName
+
+type Namespace  = Maybe Text
+type NSName = (Namespace, Text)
 
 ---------------------------------------------------------------
 -- Attributes
-newtype Attribute = MkAttr (Name, AttrValue)
+newtype Attribute = MkAttr (NSName, AttrValue)
   deriving Show
 
 -- | Represents an attribue value.
 data AttrValue = Value Bool Text
 
-fromStringLit :: String -> Text
-fromStringLit = Text.pack
+-- fromStringLit :: String -> Text
+-- fromStringLit = Text.pack
 
 -- | Create an attribue value from a string.
 attrVal, pAttrVal :: Text -> AttrValue
@@ -70,11 +76,22 @@ type Attributes = [Attribute]
 -- XML
 -- | The XML datatype representation. Is either an Element or CDATA.
 data XML
-    = Element Name Attributes Children
+    = Element NSName Attributes Children
     | CDATA Bool Text
       deriving Show
 
 type Children = [XML]
+
+-- | Embeds a string as a CDATA XML value.
+cdata , pcdata :: Text -> XML
+cdata  = CDATA False
+pcdata = CDATA True
+
+-- | Test whether an XML value is an Element or CDATA
+isElement, isCDATA :: XML -> Bool
+isElement (Element {}) = True
+isElement _ = False
+isCDATA = not . isElement
 
 ---------------------------------------------------------------
 -- XMLMetaData
@@ -90,32 +107,18 @@ data XMLMetaData = XMLMetaData
   ,  preferredRenderer :: XML -> Builder
   }
 
-{- instance Show XML where
- show = renderXML -}
-
--- | Test whether an XML value is an Element or CDATA
-isElement, isCDATA :: XML -> Bool
-isElement (Element {}) = True
-isElement _ = False
-isCDATA = not . isElement
-
--- | Embeds a string as a CDATA XML value.
-cdata , pcdata :: Text -> XML
-cdata  = CDATA False
-pcdata = CDATA True
-
 ------------------------------------------------------------------
 -- Rendering
 
 data TagType = Open | Close | Single
 
-renderTag :: TagType -> Int -> Name -> Attributes -> Builder
+renderTag :: TagType -> Int -> NSName -> Attributes -> Builder
 renderTag typ n name attrs =
         let (start,end) = case typ of
                            Open   -> (singleton  '<',  singleton  '>')
                            Close  -> (fromString "</", singleton  '>')
                            Single -> (singleton  '<',  fromString "/>")
-            nam = showName name
+            nam = showNSName name
             as  = renderAttrs attrs
          in mconcat [start, nam, as, end]
 
@@ -126,13 +129,13 @@ renderTag typ n name attrs =
 
         renderAttr :: Attribute -> Builder
         renderAttr (MkAttr (nam, (Value needsEscape val))) =
-            showName nam <> singleton '=' <> renderAttrVal  (if needsEscape then escape val else fromLazyText val)
+            showNSName nam <> singleton '=' <> renderAttrVal  (if needsEscape then escape val else fromLazyText val)
 
         renderAttrVal :: Builder -> Builder
         renderAttrVal txt = singleton '\"' <> txt <> singleton '\"'
 
-        showName (Nothing, s) = fromLazyText s
-        showName (Just d, s)  = fromLazyText d <> singleton ':' <> fromLazyText s
+        showNSName (Nothing, s) = fromLazyText s
+        showNSName (Just d, s)  = fromLazyText d <> singleton ':' <> fromLazyText s
 
         nl = singleton '\n' <> fromString (replicate n ' ')
 
