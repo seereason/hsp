@@ -4,12 +4,12 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  HSX.XMLGenerator
--- Copyright   :  (c) Niklas Broberg 2008
+-- Copyright   :  (c) Niklas Broberg 2008-2013
 -- License     :  BSD-style (see the file LICENSE.txt)
 --
--- Maintainer  :  Niklas Broberg, niklas.broberg@chalmers.se
+-- Maintainer  :  Niklas Broberg <niklas.broberg@gmail.com>
 -- Stability   :  experimental
--- Portability :  requires newtype deriving and MPTCs with fundeps
+-- Portability :  requires newtype deriving and MPTCs with fundeps and type families
 --
 -- The class and monad transformer that forms the basis of the literal XML
 -- syntax translation. Literal tags will be translated into functions of
@@ -49,18 +49,19 @@ mapXMLGenT f (XMLGenT m) = XMLGenT (f m)
 instance MonadTrans XMLGenT where
  lift = XMLGenT
 
-type Name = (Maybe Text, Text)
+type Name a = (Maybe a, a)
 
 -- | Generate XML values in some XMLGenerator monad.
 class Monad m => XMLGen m where
  type XMLType m
+ type StringType m
  data ChildType m
  data AttributeType m
- genElement    :: Name -> [XMLGenT m [AttributeType m]] -> [XMLGenT m [ChildType m]] -> XMLGenT m (XMLType m)
- genEElement   :: Name -> [XMLGenT m [AttributeType m]]                              -> XMLGenT m (XMLType m)
+ genElement    :: Name (StringType m) -> [XMLGenT m [AttributeType m]] -> [XMLGenT m [ChildType m]] -> XMLGenT m (XMLType m)
+ genEElement   :: Name (StringType m) -> [XMLGenT m [AttributeType m]]                              -> XMLGenT m (XMLType m)
  genEElement n ats = genElement n ats []
- xmlToChild    :: XMLType m -> ChildType m
- pcdataToChild :: Text -> ChildType m
+ xmlToChild    :: XMLType m    -> ChildType m
+ pcdataToChild :: StringType m -> ChildType m
 
 -- | Type synonyms to avoid writing out the XMLnGenT all the time
 type GenXML m           = XMLGenT m (XMLType m)
@@ -98,12 +99,6 @@ instance (XMLGen m) => EmbedAsChild m (XMLType m) where
 #endif
  asChild = return . return . xmlToChild
 
-instance XMLGen m => EmbedAsChild m String where
- asChild = return . return . pcdataToChild . Text.pack
-
-instance XMLGen m => EmbedAsChild m Text where
- asChild = return . return . pcdataToChild
-
 instance XMLGen m => EmbedAsChild m () where
  asChild _ = return []
 
@@ -128,6 +123,8 @@ instance XMLGen m => EmbedAsAttr m (AttributeType m) where
 instance EmbedAsAttr m a => EmbedAsAttr m [a] where
  asAttr = liftM concat . mapM asAttr
 
+-- This is certainly true, but we want the various generators to explicitly state it,
+-- in order to get the error messages right.
 class ( XMLGen m
       , SetAttr m (XMLType m)
       , AppendChild m (XMLType m)
@@ -141,23 +138,6 @@ class ( XMLGen m
       , EmbedAsAttr m (Attr Text Bool)
       ) => XMLGenerator m
 
-{-
--- This is certainly true, but we want the various generators to explicitly state it,
--- in order to get the error messages right.
-instance ( XMLGen m
-         , SetAttr m (XMLType m)
-         , AppendChild m (XMLType m)
-         , EmbedAsChild m (XMLType m)
-         , EmbedAsChild m [XMLType m]
-         , EmbedAsChild m Text
-         , EmbedAsChild m Char
-         , EmbedAsChild m ()
-         , EmbedAsAttr m (Attr Text Text)
-         , EmbedAsAttr m (Attr Text Int)
-         , EmbedAsAttr m (Attr Text Bool)
-         ) => XMLGenerator m
--}
-
 -------------------------------------
 -- Setting attributes
 
@@ -167,11 +147,13 @@ class XMLGen m => SetAttr m elem where
  setAll  :: elem -> GenAttributeList m -> GenXML m
  setAttr e a = setAll e $ liftM return a
 
+-- | prepend @attr@ to the list of attributes for the @elem@
 (<@), set :: (SetAttr m elem, EmbedAsAttr m attr) => elem -> attr -> GenXML m
 set xml attr = setAll xml (asAttr attr)
 (<@) = set
 
-(<<@) :: (SetAttr m elem, EmbedAsAttr m a) => elem -> [a] -> GenXML m
+-- | prepend the list of @attr@ to the attributes for the @elem@
+(<<@) :: (SetAttr m elem, EmbedAsAttr m attr) => elem -> [attr] -> GenXML m
 xml <<@ ats = setAll xml (liftM concat $ mapM asAttr ats)
 
 instance (TypeCastM m1 m, SetAttr m x) =>
@@ -186,10 +168,12 @@ class XMLGen m => AppendChild m elem where
  appAll   :: elem -> GenChildList m -> GenXML m
  appChild e c = appAll e $ liftM return c
 
+-- | append child to the children of @elem@
 (<:), app :: (AppendChild m elem, EmbedAsChild m c) => elem -> c -> GenXML m
 app xml c = appAll xml $ asChild c
 (<:) = app
 
+-- | append children to the children of @elem@
 (<<:) :: (AppendChild m elem, EmbedAsChild m c) => elem -> [c] -> GenXML m
 xml <<: chs = appAll xml (liftM concat $ mapM asChild chs)
 
@@ -201,28 +185,28 @@ instance (AppendChild m x, TypeCastM m1 m) =>
 -- Names
 
 -- | Names can be simple or qualified with a domain. We want to conveniently
--- use both simple strings or pairs wherever a Name is expected.
-class Show n => IsName n where
- toName :: n -> Name
+-- use both simple strings or pairs wherever a 'Name' is expected.
+class Show n => IsName n s where
+    toName :: n -> Name s
+
+-- | Strings can represent names, meaning a simple name with no domain.
+instance IsName String String where
+    toName s = (Nothing, s)
 
 -- | Names can represent names, of course.
-instance IsName Name where
- toName = id
-
--- | Strings can represent names, meaning a simple name with no domain.
-instance IsName String where
- toName s = (Nothing, Text.pack s)
+instance (Show a) => IsName (Name a) a where
+    toName = id
 
 -- | Pairs of strings can represent names, meaning a name qualified with a domain.
-instance IsName (String, String) where
- toName (ns, s) = (Just $ Text.pack ns, Text.pack s)
+instance IsName (String, String) Text where
+    toName (ns, s) = (Just $ Text.pack ns, Text.pack s)
 
 -- | Strings can represent names, meaning a simple name with no domain.
-instance IsName Text where
+instance IsName Text Text where
  toName s = (Nothing, s)
 
 -- | Pairs of strings can represent names, meaning a name qualified with a domain.
-instance IsName (Text, Text) where
+instance IsName (Text, Text) Text where
  toName (ns, s) = (Just $ ns, s)
 
 ---------------------------------------
