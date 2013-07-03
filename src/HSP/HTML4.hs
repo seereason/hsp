@@ -38,7 +38,7 @@ import Data.String              (fromString)
 import Data.Text.Lazy.Builder   (Builder, fromLazyText, singleton, toLazyText)
 import Data.Text.Lazy           (Text)
 import HSP.XML                  ( Attribute(..), Attributes, AttrValue(..), Children
-                                , Name, XML(..), XMLMetaData(..))
+                                , NSName, XML(..), XMLMetaData(..))
 import HSP.XML.PCDATA           (escaper)
 
 data TagType = Open | Close
@@ -52,7 +52,7 @@ htmlEscapeChars = [
 	('>',	fromString "gt"	  )
 	]
 
-renderTag :: TagType -> Int -> Name -> Attributes -> Builder
+renderTag :: TagType -> Int -> NSName -> Attributes -> Builder
 renderTag typ n name attrs =
         let (start,end) = case typ of
                            Open   -> (singleton '<', singleton '>')
