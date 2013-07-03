@@ -39,11 +39,12 @@ Library
   else
     Build-depends:      base >= 3 && < 4
   Hs-Source-Dirs:       src
-  Exposed-Modules:      HSP.XMLGenerator
-                        HSP.XML
-                        HSP.XML.PCDATA
+  Exposed-Modules:      HSP
                         HSP.HTML4
                         HSP.Monad
+                        HSP.XML
+                        HSP.XML.PCDATA
+                        HSP.XMLGenerator
 
   GHC-Options:          -Wall -fno-warn-orphans
   Extensions:           MultiParamTypeClasses,
