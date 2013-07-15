@@ -1,5 +1,5 @@
 Name:                   hsp
-Version:                0.8.1
+Version:                0.9.0
 License:                BSD3
 License-File:           LICENSE
 Author:                 Niklas Broberg, Joel Bjornson
@@ -21,7 +21,7 @@ Description:            Haskell Server Pages (HSP) is an extension of vanilla Ha
 Homepage:               http://hub.darcs.net/nibro/hsp
 Build-Type:             Simple
 Cabal-Version:          >= 1.6
-Tested-With:            GHC==6.8.3, GHC==6.10, GHC==7.0.2
+Tested-With:            GHC==7.6.3
 
 source-repository head
     type:     darcs
