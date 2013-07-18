@@ -193,6 +193,10 @@ class Show n => IsName n s where
 instance IsName String String where
     toName s = (Nothing, s)
 
+-- | Strings can represent names, meaning a simple name with no domain.
+instance IsName String Text where
+    toName s = (Nothing, Text.pack s)
+
 -- | Names can represent names, of course.
 instance (Show a) => IsName (Name a) a where
     toName = id
