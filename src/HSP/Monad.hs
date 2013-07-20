@@ -2,6 +2,7 @@
 module HSP.Monad where
 
 import Control.Applicative  (Applicative, Alternative, (<$>))
+import Control.Monad        (MonadPlus)
 import Control.Monad.Cont   (MonadCont)
 import Control.Monad.Error  (MonadError)
 import Control.Monad.Fix    (MonadFix)
@@ -16,7 +17,7 @@ import HSP.XMLGenerator     (AppendChild(..), Attr(..), EmbedAsAttr(..), EmbedAs
 import HSP.XML              (Attribute(..), XML(..), pAttrVal, pcdata)
 
 newtype HSPT xml m a = HSPT { unHSPT :: m a }
-    deriving (Functor, Applicative, Alternative, Monad, MonadIO, MonadReader r, MonadWriter w, MonadState s, MonadCont, MonadError e, MonadFix)
+    deriving (Functor, Applicative, Alternative, Monad, MonadPlus, MonadIO, MonadReader r, MonadWriter w, MonadState s, MonadCont, MonadError e, MonadFix)
 
 instance MonadTrans (HSPT xml) where
     lift = HSPT
