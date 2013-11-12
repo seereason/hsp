@@ -29,6 +29,7 @@ import Control.Monad.RWS   (MonadRWS)
 import Control.Monad       (MonadPlus(..),liftM)
 import Data.Text.Lazy      (Text)
 import qualified Data.Text.Lazy as Text
+import qualified Data.Text      as Strict
 
 ----------------------------------------------
 -- General XML Generation
@@ -209,9 +210,17 @@ instance IsName (String, String) Text where
 instance IsName Text Text where
  toName s = (Nothing, s)
 
+-- | strings can represent names, meaning a simple name with no domain.
+instance IsName Strict.Text Text where
+ toName s = (Nothing, Text.fromStrict s)
+
 -- | Pairs of strings can represent names, meaning a name qualified with a domain.
 instance IsName (Text, Text) Text where
  toName (ns, s) = (Just $ ns, s)
+
+-- | Pairs of strings can represent names, meaning a name qualified with a domain.
+instance IsName (Strict.Text, Strict.Text) Text where
+ toName (ns, s) = (Just $ Text.fromStrict ns, Text.fromStrict s)
 
 ---------------------------------------
 -- TypeCast, in lieu of ~ constraints

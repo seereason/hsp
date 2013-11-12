@@ -11,8 +11,9 @@ import Control.Monad.Writer (MonadWriter)
 import Control.Monad.State  (MonadState)
 import Control.Monad.Trans  (MonadIO, MonadTrans(lift))
 import Data.String          (fromString)
+import qualified Data.Text  as Strict
 import Data.Text.Lazy       (Text)
-import qualified Data.Text.Lazy as Text
+import qualified Data.Text.Lazy as Lazy
 import HSP.XMLGenerator     (AppendChild(..), Attr(..), EmbedAsAttr(..), EmbedAsChild(..), IsName(..), SetAttr(..), XMLGen(..), XMLGenerator)
 import HSP.XML              (Attribute(..), XML(..), AttrValue(..), pAttrVal, pcdata)
 
@@ -55,13 +56,16 @@ instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) [XML] where
     asChild = return . map HSPChild
 
 instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) String where
-    asChild = return . (:[]) . HSPChild . pcdata . Text.pack
+    asChild = return . (:[]) . HSPChild . pcdata . Lazy.pack
 
 instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) Text where
     asChild = return . (:[]) . HSPChild . pcdata
 
+instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) Strict.Text where
+    asChild = return . (:[]) . HSPChild . pcdata . Lazy.fromStrict
+
 instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) Char where
-    asChild = return . (:[]) . pcdataToChild . Text.singleton
+    asChild = return . (:[]) . pcdataToChild . Lazy.singleton
 
 instance (Functor m, Monad m) => EmbedAsChild (HSPT XML m) () where
     asChild = return . const []
@@ -72,17 +76,39 @@ instance (Monad m, Functor m) => EmbedAsAttr (HSPT XML m) Attribute where
 instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Text Text) where
     asAttr (n := v) = asAttr $ MkAttr (toName n, (pAttrVal v))
 
+instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Strict.Text Text) where
+    asAttr (n := v) = asAttr $ MkAttr (toName n, (pAttrVal v))
+
+instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Strict.Text Strict.Text) where
+    asAttr (n := v) = asAttr $ MkAttr (toName n, (pAttrVal $ Lazy.fromStrict v))
+
+instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Text Strict.Text) where
+    asAttr (n := v) = asAttr $ MkAttr (toName n, (pAttrVal $ Lazy.fromStrict v))
+
 instance (Monad m, Functor m) => EmbedAsAttr (HSPT XML m) (Attr Text Char) where
-    asAttr (n := c)  = asAttr (n := Text.singleton c)
+    asAttr (n := c)  = asAttr (n := Lazy.singleton c)
+
+instance (Monad m, Functor m) => EmbedAsAttr (HSPT XML m) (Attr Strict.Text Char) where
+    asAttr (n := c)  = asAttr $ MkAttr (toName n, pAttrVal $ Lazy.singleton c)
 
 instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Text Bool) where
+    asAttr (n := True)  = asAttr $ MkAttr (toName n, pAttrVal $ fromString "true")
+    asAttr (n := False) = asAttr $ MkAttr (toName n, pAttrVal $ fromString "false")
+
+instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Strict.Text Bool) where
     asAttr (n := True)  = asAttr $ MkAttr (toName n, pAttrVal $ fromString "true")
     asAttr (n := False) = asAttr $ MkAttr (toName n, pAttrVal $ fromString "false")
 
 instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Text Int) where
     asAttr (n := i)  = asAttr $ MkAttr (toName n, pAttrVal $ fromString (show i))
 
+instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Strict.Text Int) where
+    asAttr (n := i)  = asAttr $ MkAttr (toName n, pAttrVal $ fromString (show i))
+
 instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Text ()) where
+    asAttr (n := ())  = asAttr $ MkAttr (toName n, NoValue)
+
+instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Strict.Text ()) where
     asAttr (n := ())  = asAttr $ MkAttr (toName n, NoValue)
 
 instance (Functor m, Monad m) => XMLGenerator (HSPT XML m)
