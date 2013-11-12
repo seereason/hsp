@@ -14,7 +14,7 @@ import Data.String          (fromString)
 import Data.Text.Lazy       (Text)
 import qualified Data.Text.Lazy as Text
 import HSP.XMLGenerator     (AppendChild(..), Attr(..), EmbedAsAttr(..), EmbedAsChild(..), IsName(..), SetAttr(..), XMLGen(..), XMLGenerator)
-import HSP.XML              (Attribute(..), XML(..), pAttrVal, pcdata)
+import HSP.XML              (Attribute(..), XML(..), AttrValue(..), pAttrVal, pcdata)
 
 newtype HSPT xml m a = HSPT { unHSPT :: m a }
     deriving (Functor, Applicative, Alternative, Monad, MonadPlus, MonadIO, MonadReader r, MonadWriter w, MonadState s, MonadCont, MonadError e, MonadFix)
@@ -81,5 +81,8 @@ instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Text Bool) where
 
 instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Text Int) where
     asAttr (n := i)  = asAttr $ MkAttr (toName n, pAttrVal $ fromString (show i))
+
+instance (Functor m, Monad m) => EmbedAsAttr (HSPT XML m) (Attr Text ()) where
+    asAttr (n := ())  = asAttr $ MkAttr (toName n, NoValue)
 
 instance (Functor m, Monad m) => XMLGenerator (HSPT XML m)

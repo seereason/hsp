@@ -57,7 +57,7 @@ newtype Attribute = MkAttr (NSName, AttrValue)
   deriving Show
 
 -- | Represents an attribue value.
-data AttrValue = Value Bool Text
+data AttrValue = Value Bool Text | NoValue
 
 -- fromStringLit :: String -> Text
 -- fromStringLit = Text.pack
@@ -69,6 +69,7 @@ pAttrVal = Value True
 
 instance Show AttrValue where
  show (Value _ txt) = Text.unpack txt
+ show NoValue = ""
 
 type Attributes = [Attribute]
 
@@ -130,6 +131,7 @@ renderTag typ n name attrs =
         renderAttr :: Attribute -> Builder
         renderAttr (MkAttr (nam, (Value needsEscape val))) =
             showNSName nam <> singleton '=' <> renderAttrVal  (if needsEscape then escape val else fromLazyText val)
+        renderAttr (MkAttr (nam, NoValue)) = showNSName nam <> singleton '=' <> renderAttrVal (fromString "")
 
         renderAttrVal :: Builder -> Builder
         renderAttrVal txt = singleton '\"' <> txt <> singleton '\"'

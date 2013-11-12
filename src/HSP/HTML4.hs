@@ -70,6 +70,7 @@ renderTag typ n name attrs =
         renderAttr :: Attribute -> Builder
         renderAttr (MkAttr (nam, (Value needsEscape val))) =
             showName nam <> singleton '=' <> renderAttrVal (if needsEscape then (escaper htmlEscapeChars val) else fromLazyText val)
+        renderAttr (MkAttr (nam, NoValue)) = showName nam
 
         renderAttrVal :: Builder -> Builder
         renderAttrVal s = singleton '\"' <> s <> singleton '\"'
