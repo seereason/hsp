@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, TypeFamilies, MultiParamTypeClasses, FunctionalDependencies,
+{-# LANGUAGE CPP, TypeFamilies, TypeOperators, MultiParamTypeClasses, FunctionalDependencies,
       FlexibleContexts, FlexibleInstances, UndecidableInstances,
       TypeSynonymInstances, GeneralizedNewtypeDeriving #-}
 -----------------------------------------------------------------------------
@@ -18,10 +18,10 @@
 -----------------------------------------------------------------------------
 module HSP.XMLGenerator where
 
-import Control.Applicative (Applicative, Alternative)
+import Control.Applicative (Alternative)
 import Control.Monad.Trans (MonadTrans(lift), MonadIO)
 import Control.Monad.Cont  (MonadCont)
-import Control.Monad.Error (MonadError)
+import Control.Monad.Error.Class (MonadError)
 import Control.Monad.Reader(MonadReader)
 import Control.Monad.Writer(MonadWriter)
 import Control.Monad.State (MonadState)

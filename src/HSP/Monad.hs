@@ -4,7 +4,7 @@ module HSP.Monad where
 import Control.Applicative  (Applicative, Alternative, (<$>))
 import Control.Monad        (MonadPlus)
 import Control.Monad.Cont   (MonadCont)
-import Control.Monad.Error  (MonadError)
+import Control.Monad.Error.Class  (MonadError)
 import Control.Monad.Fix    (MonadFix)
 import Control.Monad.Reader (MonadReader)
 import Control.Monad.Writer (MonadWriter)
