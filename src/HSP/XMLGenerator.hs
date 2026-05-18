@@ -18,10 +18,12 @@
 -----------------------------------------------------------------------------
 module HSP.XMLGenerator where
 
+xxxxxx
+
 import Control.Applicative (Alternative)
 import Control.Monad.Trans (MonadTrans(lift), MonadIO)
 import Control.Monad.Cont  (MonadCont)
-import Control.Monad.Error.Class (MonadError)
+import Control.Monad.Except (MonadError)
 import Control.Monad.Reader(MonadReader)
 import Control.Monad.Writer(MonadWriter)
 import Control.Monad.State (MonadState)
