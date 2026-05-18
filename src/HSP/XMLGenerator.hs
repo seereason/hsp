@@ -18,8 +18,6 @@
 -----------------------------------------------------------------------------
 module HSP.XMLGenerator where
 
-xxxxxx
-
 import Control.Applicative (Alternative)
 import Control.Monad.Trans (MonadTrans(lift), MonadIO)
 import Control.Monad.Cont  (MonadCont)
